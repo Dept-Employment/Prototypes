@@ -1,0 +1,64 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+/// <reference path="../../../../../Scripts/typings/jquery/jquery.d.ts" />
+/// <reference path="../../../../../Scripts/typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="../../../../../Scripts/typings/jquery.validation/jquery.validation.d.ts" />
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var JobsWidgetItem = (function (_super) {
+            __extends(JobsWidgetItem, _super);
+            function JobsWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            JobsWidgetItem.prototype.initialise = function () {
+                var _this = this;
+                _super.prototype.initialise.call(this);
+                var loadingPanelElement = this.element.find('#YourJobsLoadingPanel');
+                var loadingPanel = loadingPanelElement.getAjaxLoadingPanel();
+                loadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    var form = loadingPanelElement.find('form');
+                    var jQuery = $;
+                    jQuery.validator.unobtrusive.parse(form);
+                    AJSValidate.InitialiseDependentValidations(form);
+                    loadingPanelElement.find('[data-favourite-fluent]').change(function (e, isFavourite) {
+                        if (isFavourite) {
+                            _this.trigger(JobsWidgetEvents[JobsWidgetEvents.FavouriteJobAdded]);
+                        }
+                        else {
+                            _this.trigger(JobsWidgetEvents[JobsWidgetEvents.FavouriteJobRemoved]);
+                        }
+                    });
+                    Midas.Core.currentPage.initialise(loadingPanel.element);
+                });
+                this.addWidgetEventDependency(new Midas.Core.WidgetEventInfo("EmployerFavouriteJobsWidget", Widgets.EmployerFavouriteJobsWidgetEvents[Widgets.EmployerFavouriteJobsWidgetEvents.FavouriteJobRemoved], function (args) {
+                    loadingPanel.refresh();
+                }));
+                this.addWidgetEventDependency(new Midas.Core.WidgetEventInfo("EmployerFavouriteJobsWidget", Widgets.EmployerFavouriteJobsWidgetEvents[Widgets.EmployerFavouriteJobsWidgetEvents.FavouriteJobAdded], function (args) {
+                    loadingPanel.refresh();
+                }));
+            };
+            return JobsWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.JobsWidgetItem = JobsWidgetItem;
+        (function (JobsWidgetEvents) {
+            JobsWidgetEvents[JobsWidgetEvents["FavouriteJobAdded"] = 0] = "FavouriteJobAdded";
+            JobsWidgetEvents[JobsWidgetEvents["FavouriteJobRemoved"] = 1] = "FavouriteJobRemoved";
+        })(Widgets.JobsWidgetEvents || (Widgets.JobsWidgetEvents = {}));
+        var JobsWidgetEvents = Widgets.JobsWidgetEvents;
+        var JobsWidgetItemInitialiser = (function () {
+            function JobsWidgetItemInitialiser() {
+            }
+            JobsWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new JobsWidgetItem(widgetItemElement);
+            };
+            return JobsWidgetItemInitialiser;
+        }());
+        Widgets.JobsWidgetItemInitialiser = JobsWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=JobsWidget.js.map

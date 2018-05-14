@@ -1,0 +1,86 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ContactJobSeekerButton = (function (_super) {
+            __extends(ContactJobSeekerButton, _super);
+            function ContactJobSeekerButton(element) {
+                _super.call(this, element, Core.ControlType.ContactJobSeekerButton, {});
+            }
+            ContactJobSeekerButton.prototype.initialise = function () {
+                var _this = this;
+                this.element.click(function () {
+                    var url = "/employers/contactjobseeker";
+                    var submitUrl = "/employers/contactjobseeker/contactjobseeker";
+                    var data = {
+                        jobSeekerId: _this.element.data('jobseekerid'),
+                        jobId: null,
+                        isAjaxSubmit: true
+                    };
+                    var candidateId = _this.element.data('candidateid');
+                    if (candidateId != null) {
+                        url = "/employers/candidates/contactcandidate";
+                        submitUrl = url;
+                        data = {
+                            candidateId: candidateId
+                        };
+                    }
+                    $.get(url, data, function (getResult) {
+                        if (Core.AjaxValidation.processAjaxResult(getResult, _this.element.closest('form')[0])) {
+                            var containerElement = $(getResult.AdditionalData);
+                            containerElement.insertAfter(_this.element);
+                            Core.currentPage.initialise(containerElement);
+                            var modal = containerElement.find('.modal').first().getModal();
+                            modal.ajaxSubmitButton.click(function () {
+                                var formData = modal.form.serializeArray();
+                                $.post(submitUrl, formData, function (postResult) {
+                                    if (Core.AjaxValidation.processAjaxResult(postResult, modal.form[0])) {
+                                        modal.element.modal('hide');
+                                        Core.currentPage.summary.toggleSuccessSummary("Your message was sent to the job seeker.", true, true);
+                                    }
+                                });
+                            });
+                            modal.element.on('hidden.bs.modal', function () {
+                                containerElement.remove();
+                            });
+                            modal.element.find('#EmployerName').on('change keydown paste input', function (e) {
+                                var target = $(e.currentTarget);
+                                var signatureName = $("#SignatureEmployerName");
+                                if (signatureName.length) {
+                                    signatureName.text(target.val());
+                                }
+                            });
+                            modal.element.modal();
+                        }
+                    });
+                });
+            };
+            return ContactJobSeekerButton;
+        }(Core.Control));
+        Core.ContactJobSeekerButton = ContactJobSeekerButton;
+        var ContactJobSeekerButtonInitialiser = (function () {
+            function ContactJobSeekerButtonInitialiser() {
+                var _this = this;
+                this.initialise = function (container) {
+                    container.find('[data-contactjobseekerbutton]').each(function (index, element) {
+                        var linkElement = $(element);
+                        var link = new ContactJobSeekerButton(linkElement);
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return ContactJobSeekerButtonInitialiser;
+        }());
+        Core.ContactJobSeekerButtonInitialiser = ContactJobSeekerButtonInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.contactjobseekerbutton.js.map

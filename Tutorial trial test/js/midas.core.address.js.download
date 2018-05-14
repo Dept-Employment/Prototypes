@@ -1,0 +1,152 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Address = (function () {
+            function Address() {
+                var _this = this;
+                this.initialise = function (container) {
+                    if (container.find("[data-address]").length) {
+                        container.find("[data-address]").each(function (i) {
+                            var addressScope = $(this).data("addressscope");
+                            var addressFile = $(this).data("addressfile");
+                            var minChars = $(this).data("addressminchars");
+                            var addressExcludeLatLong = $(this).data("addressexcludelatlong");
+                            var overrideDisabled = $(this).data("addressoverridedisabled");
+                            if (!minChars || minChars === "0") {
+                                minChars = 7;
+                            }
+                            var autocompleteInput = $(this);
+                            var autocompleteContainer = autocompleteInput.parent();
+                            var id = $(this).attr("data-address");
+                            $(this).autocomplete({
+                                source: function (request, response) {
+                                    if (request.term.length < minChars) {
+                                        var count = minChars - request.term.length;
+                                        if (count == 1) {
+                                            response([{ label: 'Please enter ' + count + ' more character', loading: false }]);
+                                        }
+                                        else {
+                                            response([{ label: 'Please enter ' + count + ' more characters', loading: false }]);
+                                        }
+                                        return;
+                                    }
+                                    response([{ label: "Loading...", loading: true }]);
+                                    $.ajax('/ExternalServices/Address/AutoComplete/', {
+                                        type: "GET",
+                                        data: { Address: (request.term), AddressScope: (addressScope), AddressFile: (addressFile), ExcludeLatLong: (addressExcludeLatLong) },
+                                        contentType: "application/json; charset=utf-8",
+                                        dataType: "json",
+                                        global: false,
+                                        success: function (data) {
+                                            if (!data.length) {
+                                                response([{ label: 'No matching results found', value: response.term }]);
+                                            }
+                                            else {
+                                                response($.map(data, function (item) {
+                                                    var displayAddress;
+                                                    if (item.AddressScope === 0) {
+                                                        displayAddress = $.trim(item.Line1) + ' ' + $.trim(item.Line2) + ' ' + $.trim(item.Locality);
+                                                        displayAddress = displayAddress.replace("  ", " ");
+                                                    }
+                                                    else {
+                                                        displayAddress = item.Locality;
+                                                    }
+                                                    return {
+                                                        label: Midas.Core.currentPage.HtmlDecode(displayAddress),
+                                                        text: item.text,
+                                                        code: item
+                                                    };
+                                                }));
+                                            }
+                                        },
+                                        error: function (data) {
+                                            var message = "An error has occurred please try again";
+                                            return { label: message, text: "", code: "" };
+                                        },
+                                        beforeSend: function () {
+                                            response([{ label: "Loading...", loading: true }]);
+                                            autocompleteInput.addClass("autocomplete-loading");
+                                        },
+                                        complete: function () {
+                                            autocompleteInput.removeClass("autocomplete-loading");
+                                            if (request.term.length > minChars && !overrideDisabled) {
+                                                autocompleteContainer.siblings(".address-override").show("slide");
+                                            }
+                                        }
+                                    });
+                                },
+                                select: function (event, ui) {
+                                    $.each(ui.item.code, function (i, v) {
+                                        var tag = "#" + id + "_" + i;
+                                        $(tag).val(Midas.Core.currentPage.HtmlDecode(v));
+                                        if ($(tag).is("select")) {
+                                            $(tag).trigger('change');
+                                        }
+                                    });
+                                },
+                                change: function (event, ui) {
+                                    if (ui.item === null) {
+                                        this.value = '';
+                                        autocompleteInput.val("");
+                                        autocompleteInput.siblings('input').val("");
+                                    }
+                                },
+                                delay: 500
+                            });
+                            //handle default change event
+                            $(this).change(function () {
+                                if ($(this).val() == "") {
+                                    $('[name^="' + $(this).data("address") + '"]').val("");
+                                }
+                            });
+                            autocompleteInput.bind("change", function (event) {
+                                event.preventDefault();
+                                if (autocompleteInput.val() == "") {
+                                    autocompleteInput.siblings('input').val("");
+                                }
+                            });
+                            autocompleteInput.bind("paste", function () {
+                                setTimeout(function () {
+                                    autocompleteInput.autocomplete("search", autocompleteInput.val());
+                                }, 0);
+                            });
+                            // Set the toggle behavior for the override checkbox
+                            var overrideCheckbox = autocompleteContainer.siblings(".address-override").find("input").first();
+                            overrideCheckbox.change(function () {
+                                // Clear values on toggle
+                                autocompleteContainer.siblings(".override-area").find("input, select").val("").trigger('change');
+                                Midas.Core.currentPage.addressAutoComplete.ToggleAutoCompleteFields(autocompleteInput, this);
+                            });
+                            Midas.Core.currentPage.addressAutoComplete.ToggleAutoCompleteFields(autocompleteInput, overrideCheckbox); // Set the state of the control according to the current viewstate
+                        });
+                    }
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            Address.prototype.ToggleAutoCompleteFields = function (textBox, checkBox) {
+                var checked = $(checkBox).is(":checked");
+                textBox.attr("readonly", checked);
+                // This seems like a messy way to select the override area
+                // But if there are multiple address controls on the page we need to ensure we are toggling the one that belongs to the input
+                if (checked) {
+                    textBox.val("Please complete the fields below.");
+                    textBox.closest(".form-group").find(".address-details").show("blind", 500);
+                }
+                else {
+                    textBox.closest(".form-group").find(".address-details").hide("blind", 500);
+                    // We need to blank out the autocomplete, because they may have put garbage in the override fields, then unchecked the box
+                    var newVal = textBox.val().replace("Please complete the fields below.", "");
+                    textBox.val(newVal);
+                }
+            };
+            return Address;
+        }());
+        Core.Address = Address;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.address.js.map

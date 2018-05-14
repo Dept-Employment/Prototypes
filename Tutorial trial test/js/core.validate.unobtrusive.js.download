@@ -1,0 +1,545 @@
+﻿String.prototype.endsWith = function (suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
+String.prototype.startsWith = function (prefix) {
+    return this.indexOf(prefix) === 0;
+};
+
+$.extend($.expr[':'], {
+    attrNameEnd: function (el, i, props) {
+
+        var hasAttribute = false;
+
+        $.each(el.attributes, function (i, attr) {
+            if (attr.name.endsWith(props[3])) {
+                hasAttribute = true;
+                return false;  // to halt the iteration
+            }
+        });
+
+        return hasAttribute;
+    },
+
+    attrNameStart: function (el, i, props) {
+
+        var hasAttribute = false;
+
+        $.each(el.attributes, function (i, attr) {
+            if (attr.name.startsWith(props[3])) {
+                hasAttribute = true;
+                return false;  // to halt the iteration
+            }
+        });
+
+        return hasAttribute;
+    }
+});
+
+; (function ($, window, document, undefined) {
+
+    var setValidationValues = function (options, ruleName, value) {
+        options.rules[ruleName] = value;
+        if (options.message) {
+            options.messages[ruleName] = options.message;
+        }
+    };
+
+    function splitAndTrim(value) {
+        return value.replace(/^\s+|\s+$/g, "").split(/\s*,\s*/g);
+    }
+
+    function escapeAttributeValue(value) {
+        // As mentioned on http://api.jquery.com/category/selectors/
+        return value.replace(/([!"#$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g, "\\$1");
+    }
+
+    function getModelPrefix(fieldName) {
+        return fieldName.substr(0, fieldName.lastIndexOf(".") + 1);
+    }
+
+    function appendModelPrefix(value, prefix) {
+        if (value.indexOf("*.") === 0) {
+            value = value.replace("*.", prefix);
+        }
+        return value;
+    }
+
+    var $Unob = $.validator.unobtrusive;
+
+    $Unob.adapters.add("isequalto", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isequalto", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("isnotequalto", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isnotequalto", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("isgreaterthan", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isgreaterthan", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("isgreaterthanorequalto", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isgreaterthanorequalto", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("islessthan", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "islessthan", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("islessthanorequalto", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "islessthanorequalto", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("isregexmatch", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isregexmatch", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("isnotregexmatch", ["dependentproperty", "comparisontype", "passonnull", "failonnull"], function (options) {
+        setValidationValues(options, "isnotregexmatch", {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        });
+    });
+
+    $Unob.adapters.add("requiredif", ["dependentproperty", "comparisontype", "hide", "value"], function (options) {
+        var value = {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            hide: options.params.hide,
+            value: options.params.value
+        };
+        setValidationValues(options, "requiredif", value);
+    });
+
+    $Unob.adapters.add("comparevalue", ["dependentproperty", "comparisontype", "value", "onlyifrequired"], function (options) {
+        var value = {
+            dependentproperty: options.params.dependentproperty,
+            comparisontype: options.params.comparisontype,
+            value: options.params.value,
+            onlyifrequired: options.params.onlyifrequired
+        };
+        setValidationValues(options, "comparevalue", value);
+    });
+
+    $Unob.adapters.add("daterange", ["mindaysoffset", "minmonthsoffset", "minyearsoffset", "maxdaysoffset", "maxmonthsoffset", "maxyearsoffset", "comparisondateproperty", "mindatedependentproperty", "maxdatedependentproperty", "value"], function (options) {
+        var value = {
+            mindaysoffset: options.params.mindaysoffset,
+            minmonthsoffset: options.params.minmonthsoffset,
+            minyearsoffset: options.params.minyearsoffset,
+            maxdaysoffset: options.params.maxdaysoffset,
+            maxmonthsoffset: options.params.maxmonthsoffset,
+            maxyearsoffset: options.params.maxyearsoffset,
+            comparisondateproperty: options.params.comparisondateproperty,
+            mindatedependentproperty: options.params.mindatedependentproperty,
+            maxdatedependentproperty: options.params.maxdatedependentproperty,
+            requiredMessage: options.message,
+            passonnull: options.params.passonnull,
+            failonnull: options.params.failonnull
+        };
+        setValidationValues(options, "daterange", value);
+    });
+
+    $Unob.adapters.add("requiredhtml", function (options) {
+        var value = { requiredMessage: options.message };
+        setValidationValues(options, "requiredhtml", value);
+    });
+
+    $Unob.adapters.add("coreajax", ["url", "type", "request", "values"], function (options) {
+        var value = {
+            url: options.params.url,
+            type: options.params.type,
+            data: {}
+        },
+            prefix = getModelPrefix(options.element.name);
+
+        if (options.params.values) {
+            var requestParameters = splitAndTrim(options.params.request);
+            $.each(splitAndTrim(options.params.values), function (i, fieldName) {
+                var paramName = appendModelPrefix(fieldName, prefix);
+                value.data[requestParameters[i]] = function () {
+                    return $(options.form).find(":input").filter("[name='" + escapeAttributeValue(paramName) + "']").val();
+                };
+            });
+        }
+
+        setValidationValues(options, "coreajax", value);
+    });
+
+    $Unob.adapters.add("abn", function (options) {
+        setValidationValues(options, "abn", true);
+    });
+
+    $Unob.adapters.add('checkboxlistrequired', ["propertyname"], function (options) {
+        var value = {
+            propertyname: options.params.propertyname
+        };
+        setValidationValues(options, "checkboxlistrequired", value);
+
+    });
+
+    $Unob.adapters.add("accept", ["extensions"], function (options) {
+        var values = {
+            extensions: options.params.extensions
+        };
+        setValidationValues(options, "accept", values);
+    });
+
+    $Unob.adapters.add("httppostedfilesize", ["maxfilesize"], function (options) {
+        var values = {
+            maxfilesize: options.params.maxfilesize
+        };
+        setValidationValues(options, "httppostedfilesize", values);
+    });
+
+    $Unob.adapters.add("maxtags", ["maxtagscount", "maxtagsregex"], function (options) {
+        var values = {
+            maxtagscount: options.params.maxtagscount,
+            maxtagsregex: options.params.maxtagsregex
+        };
+        setValidationValues(options, "maxtags", values);
+    });
+
+    $Unob.adapters.add("maxtaglength", ["maxtaglengthcount"], function (options) {
+        var values = {
+            maxtaglengthcount: options.params.maxtaglengthcount
+        };
+        setValidationValues(options, "maxtaglength", values);
+    });
+
+
+
+})(jQuery, window, document);
+
+
+/* Override of jQuery unobtrusive validation functions 'onErrors' and 'onError' */
+$(function () {
+    $('form').each(function () {
+        var validator = $.data($(this)[0], 'validator');
+        if (validator != null) {
+            var settings = validator.settings;
+
+            // Whether to focus the first invalid property by default
+            settings.focusInvalid = false;
+
+            settings.ignore = function () {
+                var content = $('#content');
+
+                if (content != undefined) {
+                    var skip = (/^true$/i.test(content.data('core-skipvalidation'))) ? true : false;
+
+                    if (skip) {
+                        return true;
+                    }
+                }
+                if ($(this).is("[data-always-validate]"))
+                    return false;
+
+                if ($(this).is(":hidden") || $(this).is("[disabled]")) {
+                    return true;
+                }
+                // Don't ignore
+                return false;
+            };
+
+            settings.showErrors = function (errorMap, errorList) {
+                $.each(errorList, function () {
+                    if ($(this.element).is("[data-html-editor]")) {
+                        var ckeditor = $('#cke_' + $(this.element).data('html-editor'));
+                        ckeditor.addClass("ck-input-validation-error");
+                    }
+                });
+                this.defaultShowErrors();
+            };
+        }
+        AJSValidate.InitialiseDependentValidations($(this));
+    });
+});
+
+var AJSValidate = {
+
+    ShowErrors: function (parentContainer, errors) {
+        var validator = null;
+        if ($(parentContainer).is('form')) {
+            validator = $.data(parentContainer, 'validator');
+        }
+
+        this.DisplayErrors.call(parentContainer, null, validator, errors, true);
+    },
+
+    DisplayErrors: function (event, validator, errorList, isAjaxErrors) {
+        if ($('#Framework').val() === "Midas") {
+            Midas.Core.currentPage.summary.clearSummarySuccess();
+            Midas.Core.currentPage.summary.clearSummaryInfo();
+            Midas.Core.currentPage.summary.clearSummaryWarning();
+        }
+        else {
+            AJSGlobal.ClearSummarySuccess();
+            AJSGlobal.ClearSummaryInfo();
+            AJSGlobal.ClearSummaryWarning();
+        }
+
+        var validatorErrorList = { };
+        if (validator != null) {
+            validatorErrorList = validator.errorList;
+        }
+
+        if (validator == null || validator.pendingRequests <= 0) {
+            if (errorList && !isAjaxErrors) {
+                validatorErrorList = $.union(validatorErrorList, errorList, function(value) { return value.message; });
+            }
+
+            var container = $(this).find("[data-valmsg-summary=true]");
+            var list = container.find("ul");
+            if (list && list.length && (validatorErrorList.length || errorList)) {
+                list.empty();
+                container.addClass("validation-summary-errors").removeClass("validation-summary-valid").removeClass("hidden");
+
+                if (isAjaxErrors) {
+                    $.each(errorList, function () {
+                        $("<li />").append('<span class="summary-error-item"><span class="readers">Error: </span>' + this.message + '</span>').appendTo(list);
+                    });
+                }
+
+                $.each(validatorErrorList, function () {
+                    var elementId = $(this.element)[0].id;
+                    var selector = "#" + elementId;
+                    if ($(this.element).data("html-editor")) {
+                        elementId = "cke_" + elementId;
+                        selector = "#" + elementId + " div.cke_wysiwyg_div";
+
+                        var ckeditor = $('#cke_' + $(this.element).data('html-editor'));
+                        ckeditor.addClass("ck-input-validation-error");
+                    } else if ($(this.element).parent().data('templatedropdownlist')) {
+                        var templateNameContainer = $(this.element).parent(),
+                            templateNameDropDownList = templateNameContainer.getTemplateDropDownList();
+                        elementId = templateNameDropDownList.toggleElement.attr('id');
+                        selector = '#' + elementId;
+
+                        templateNameDropDownList.toggleElement.addClass("validation-error");
+                    }
+
+                    $("<li />").append('<a href="#' + elementId + '" data-error-focus="' + selector + '" class="summary-error-item"><span class="readers">Error: </span>' + this.message).appendTo(list);
+                });
+
+                $(list).find("a.summary-error-item").click(function (e) {
+                    e.preventDefault();
+                    $($(this).data("error-focus")).focus();
+                });
+
+                if (validator != null) {
+                    validator.errorList = validatorErrorList; 
+                    validator.defaultShowErrors();
+                }
+
+                // Focus main error form header
+                var errorH2 = container.find('h2');
+                if (errorH2.length) {
+                    // Add tabindex to allow focus on non <input>, <a> and <select> element
+                    errorH2.attr('tabindex', '-1');
+                    if (!container.closest('[role=dialog]').length) {
+                        $(window).scrollTop(errorH2.offset().top - 150); // Added offset to handle floating nav
+                    }
+                    errorH2.focus();
+                }
+            }
+        }
+        else {
+            var context = this;
+            setTimeout(function () {
+                AJSValidate.DisplayErrors.call(context, event, validator, errorList, isAjaxErrors);
+            }, 50);
+        }
+    },
+
+    CKEditorLoaded: function (e) {
+        var textarea = $('#' + e.editor.name);
+        if (textarea.is(':attrNameStart("data-val")')) {
+            var ckeditor = $('#cke_' + textarea.data('html-editor'));
+
+            // We hookup the blur event here rather than the focusout event as the bubbling
+            // of the focusout event on CKEDITOR causes ajax validation calls to be executed
+            // multiple times in some cases when they don't need to be.
+            ckeditor.find('div.cke_wysiwyg_div').blur(function (event) {
+                // We also don't want the event to executed if it relates to a paste operation so check for that
+                if (event.relatedTarget === null || event.relatedTarget.id !== 'cke_pastebin') {
+                    $(textarea).val(CKEDITOR.instances[$(textarea).data('html-editor')].getData());
+                    var valid = textarea.valid();
+                    if (valid) {
+                        ckeditor.removeClass("ck-input-validation-error");
+                    }
+                    else {
+                        ckeditor.addClass("ck-input-validation-error");
+                    }
+                }
+            });
+        }
+    },
+
+    InitialiseDependentValidations: function (context) {
+        context.find("input,select,text").filter(':attrNameEnd("-dependentproperty")').each(function () {
+            var element = $(this);
+            $.each(element[0].attributes, function (i, attr) {
+                if (attr.name.endsWith("-dependentproperty") && attr.name.indexOf("-comparevalue") < 0) {
+                    var dependentProperty = $.coreValidate.getFieldPrefixFromId(element[0], attr.value);
+                    AJSValidate.DisplayMandatoryIndicator(element);
+                    $.coreValidate.getDependentControls(element[0], attr.value).focusout(function () {
+                        AJSValidate.DisplayMandatoryIndicator(element);
+                        if (element.is(".input-validation-error,.valid")) {
+                            element.valid();
+                        }
+                        if (element.is("[data-val-requiredif-hide]")) {
+                            AJSValidate.ToggleVisibility(element);
+                        }
+                    }).change(function () {
+                        AJSValidate.DisplayMandatoryIndicator(element);
+                        if (element.is(".input-validation-error,.valid")) {
+                            element.valid();
+                        }
+                        if (element.is("[data-val-requiredif-hide]")) {
+
+                            AJSValidate.ToggleVisibility(element);
+                        }
+                    });
+                }
+            });
+
+            if (element.is("[data-val-requiredif-hide]")) {
+                AJSValidate.ToggleVisibility(element);
+            }
+        });
+    },
+
+    DisplayMandatoryIndicator: function (element) {
+
+        var label = $("label[for='" + element[0].id + "']");
+        if (element.is('input[type="radio"]') || element.is('input[type="checkbox"]')) {
+            if ($('#Framework').val() == "Midas") {
+                var type = element.attr('type');
+                if (type == 'radio') {
+                    type = type + 'button';
+                }
+    
+                var parentLabel = element.parent();
+                if (parentLabel.parent().parent().is('fieldset[data-' + type + 'list]')) {
+                    label = parentLabel.parent().parent().children('legend').first();
+                } else {
+                    label = element.closest('label');
+                }
+            } else {
+                label = element.closest('fieldset').children("legend").first();
+            }
+        }
+
+        var asterisk = label.find("img.mandImage");
+        if ($.coreValidate.isRequiredIf(element[0], element.data("val-requiredif-dependentproperty"), element.data("val-requiredif-comparisontype"), element.data("val-requiredif-value"))) {
+            if (asterisk.length == 0) {
+                label.append('<img alt="An asterisk" class="mandImage mandatory" src="/images/v4mandatory.png"><span class="readers sr-only">This is a required field.</span>');
+            }
+        }
+        else {
+            asterisk.next("span.readers").first().remove();
+            asterisk.remove();
+        }
+    },
+    CheckRequiredIf: function (element) {
+        return $.coreValidate.isRequiredIf(element[0], element.data("val-requiredif-dependentproperty"), element.data("val-requiredif-comparisontype"), element.data("val-requiredif-value"));
+    },
+
+    ToggleVisibility: function (element) {
+        if (AJSValidate.CheckRequiredIf(element)) {
+            AJSValidate.ShowFormInput(element);
+        }
+        else {
+            AJSValidate.HideFormInput(element);
+        }
+    },
+    HideFormInput: function (element) {
+        var parent = element.parent();
+
+        AJSValidate.ClearInput(element);
+        //midas hack, we should look at breaking this out into a separate ts file..
+        if ($("html").hasClass("midas")) {
+            parent = element.closest(".form-group");
+        } else {
+            if (parent.is(".select-wrapper")) {
+                parent = parent.parent();
+            } else if (parent.is(".radioButtonListItemWrap")) {
+                parent = parent.closest('div.form__item');
+            }
+        }
+        if (parent.is("div.form__item") || parent.is("div.form-group")) {
+            parent.hide();
+        }
+        else {
+            element.hide();
+            $('label[for="' + element.attr('id') + '"]').hide();
+        }
+    },
+    ShowFormInput: function (element) {
+        var parent = element.parent();
+        if ($("html").hasClass("midas")) {
+            parent = element.closest(".form-group");
+        } else {
+            if (parent.is(".select-wrapper"))
+                parent = parent.parent();
+            else if (parent.is(".radioButtonListItemWrap"))
+                parent = parent.parent().parent().parent();
+        }
+        if (parent.is("div.form__item") || parent.is("div.form-group")) {
+            parent.show();
+        }
+        else {
+            element.show();
+            $('label[for="' + element.attr('id') + '"]').show();
+        }
+    },
+    ClearInput: function (element) {
+        if (element.is('[type="radio"]') || element.is('[type="checkbox"]')) {
+            $('input[name="' + element.attr('name') + '"]').each(function () {
+                $(this).prop('checked', false).change();
+            });
+        }
+        else if (element.is("input") || element.is("select")) {
+            element.val("").change();
+        }
+    }
+}
+

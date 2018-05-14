@@ -1,0 +1,217 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Control = (function (_super) {
+            __extends(Control, _super);
+            function Control(element, controlType, settings, markInitialised) {
+                if (markInitialised === void 0) { markInitialised = true; }
+                _super.call(this, settings);
+                this.element = element;
+                if (this.initialised != null && this.initialised === true) {
+                    return;
+                }
+                this.settings = $.extend(true, {}, settings, this.initaliseSettings);
+                this.settings.controlName = ControlType[controlType];
+                this.element.data(ControlType[ControlType.Control], this);
+                this.element.data(ControlType[controlType], this);
+                this.initialise();
+                if (markInitialised) {
+                    this.initialised = true;
+                }
+            }
+            Object.defineProperty(Control.prototype, "element", {
+                get: function () {
+                    return this.elementField;
+                },
+                set: function (element) {
+                    this.elementField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Control.prototype, "document", {
+                get: function () {
+                    return $(this.element[0].style ? this.element[0].ownerDocument : this.element);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Control.prototype, "initaliseSettings", {
+                get: function () {
+                    return this.element.data('settings');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Control.prototype, "settings", {
+                get: function () {
+                    return this.settingsField;
+                },
+                set: function (settings) {
+                    this.settingsField = settings;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Control.prototype, "initialised", {
+                get: function () {
+                    return this.element.data('initialised');
+                },
+                set: function (initialised) {
+                    this.element.data('initialised', initialised);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Control.prototype.destroy = function () {
+                this.element = null;
+            };
+            return Control;
+        }(Core.Observable));
+        Core.Control = Control;
+        var DataBoundControl = (function (_super) {
+            __extends(DataBoundControl, _super);
+            function DataBoundControl(element, controlType, settings) {
+                _super.call(this, element, controlType, settings);
+                $.fn.serializeObject = function () {
+                    var arrayData = this.serializeArray();
+                    var objectData = {};
+                    $.each(arrayData, function () {
+                        var value;
+                        if (this.value != null) {
+                            value = this.value;
+                        }
+                        else {
+                            value = '';
+                        }
+                        if (objectData[this.name] != null) {
+                            if (!objectData[this.name].push) {
+                                objectData[this.name] = [objectData[this.name]];
+                            }
+                            objectData[this.name].push(value);
+                        }
+                        else {
+                            objectData[this.name] = value;
+                        }
+                    });
+                    return objectData;
+                };
+            }
+            DataBoundControl.prototype.initialise = function () {
+                this.element.data(ControlType[ControlType.DataBoundControl], this);
+            };
+            Object.defineProperty(DataBoundControl.prototype, "dataSource", {
+                get: function () {
+                    return this.dataSourceField;
+                },
+                set: function (dataSource) {
+                    this.dataSourceField = dataSource;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataBoundControl.prototype.selectAllItems = function () {
+                this.element.find("input[type=checkbox][data-item-select]").each(function (index, element) {
+                    $(element).prop("checked", true);
+                });
+            };
+            DataBoundControl.prototype.deselectAllItems = function () {
+                this.element.find("input[type=checkbox][data-item-select]").each(function (index, element) {
+                    $(element).prop("checked", false);
+                });
+            };
+            DataBoundControl.prototype.getSelectedItemIds = function () {
+                var selectedItemIds = new Array();
+                this.element.find("input[type=checkbox][data-item-select]:checked").each(function (index, element) {
+                    selectedItemIds.push($(element).val());
+                });
+                return selectedItemIds;
+            };
+            return DataBoundControl;
+        }(Control));
+        Core.DataBoundControl = DataBoundControl;
+        var ControlInitialiser = (function () {
+            function ControlInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    for (var controlType in ControlType) {
+                        _this.initControl(controlType);
+                    }
+                };
+            }
+            ControlInitialiser.prototype.initControl = function (controlType) {
+                var controlName = ControlType[controlType];
+                var controlGetter = 'get' + controlName;
+                $.fn[controlGetter] = function () {
+                    return this.data(controlName);
+                };
+            };
+            return ControlInitialiser;
+        }());
+        Core.ControlInitialiser = ControlInitialiser;
+        (function (ControlType) {
+            ControlType[ControlType["Control"] = 0] = "Control";
+            ControlType[ControlType["DataBoundControl"] = 1] = "DataBoundControl";
+            ControlType[ControlType["AjaxLoadingPanel"] = 2] = "AjaxLoadingPanel";
+            ControlType[ControlType["EditableDisplayView"] = 3] = "EditableDisplayView";
+            ControlType[ControlType["ListView"] = 4] = "ListView";
+            ControlType[ControlType["Pager"] = 5] = "Pager";
+            ControlType[ControlType["SearchBar"] = 6] = "SearchBar";
+            ControlType[ControlType["SearchFilterBar"] = 7] = "SearchFilterBar";
+            ControlType[ControlType["SearchResultStatsBar"] = 8] = "SearchResultStatsBar";
+            ControlType[ControlType["TemplateDropDownList"] = 9] = "TemplateDropDownList";
+            ControlType[ControlType["SortableContainer"] = 10] = "SortableContainer";
+            ControlType[ControlType["SortableItem"] = 11] = "SortableItem";
+            ControlType[ControlType["WidgetContainer"] = 12] = "WidgetContainer";
+            ControlType[ControlType["WidgetItem"] = 13] = "WidgetItem";
+            ControlType[ControlType["Modal"] = 14] = "Modal";
+            ControlType[ControlType["Favourite"] = 15] = "Favourite";
+            ControlType[ControlType["Rating"] = 16] = "Rating";
+            ControlType[ControlType["ContactJobSeekerButton"] = 17] = "ContactJobSeekerButton";
+            ControlType[ControlType["SmartNav"] = 18] = "SmartNav";
+        })(Core.ControlType || (Core.ControlType = {}));
+        var ControlType = Core.ControlType;
+        (function (CrudEvents) {
+            CrudEvents[CrudEvents["Create"] = 0] = "Create";
+            CrudEvents[CrudEvents["Read"] = 1] = "Read";
+            CrudEvents[CrudEvents["Update"] = 2] = "Update";
+            CrudEvents[CrudEvents["Delete"] = 3] = "Delete";
+        })(Core.CrudEvents || (Core.CrudEvents = {}));
+        var CrudEvents = Core.CrudEvents;
+        (function (KeyCode) {
+            KeyCode[KeyCode["Backspace"] = 8] = "Backspace";
+            KeyCode[KeyCode["Tab"] = 9] = "Tab";
+            KeyCode[KeyCode["Enter"] = 13] = "Enter";
+            KeyCode[KeyCode["Shift"] = 16] = "Shift";
+            KeyCode[KeyCode["Ctrl"] = 17] = "Ctrl";
+            KeyCode[KeyCode["Alt"] = 18] = "Alt";
+            KeyCode[KeyCode["Pause"] = 19] = "Pause";
+            KeyCode[KeyCode["CapsLock"] = 20] = "CapsLock";
+            KeyCode[KeyCode["Escape"] = 27] = "Escape";
+            KeyCode[KeyCode["Space"] = 32] = "Space";
+            KeyCode[KeyCode["PageUp"] = 33] = "PageUp";
+            KeyCode[KeyCode["PageDown"] = 34] = "PageDown";
+            KeyCode[KeyCode["End"] = 35] = "End";
+            KeyCode[KeyCode["Home"] = 36] = "Home";
+            KeyCode[KeyCode["LeftArrow"] = 37] = "LeftArrow";
+            KeyCode[KeyCode["UpArrow"] = 38] = "UpArrow";
+            KeyCode[KeyCode["RightArrow"] = 39] = "RightArrow";
+            KeyCode[KeyCode["DownArrow"] = 40] = "DownArrow";
+            KeyCode[KeyCode["Insert"] = 45] = "Insert";
+            KeyCode[KeyCode["Delete"] = 46] = "Delete";
+        })(Core.KeyCode || (Core.KeyCode = {}));
+        var KeyCode = Core.KeyCode;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.ControlInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.control.js.map

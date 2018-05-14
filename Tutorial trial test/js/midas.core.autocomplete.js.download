@@ -1,0 +1,66 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/bootstrap/bootstrap.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var AutoComplete = (function () {
+            function AutoComplete(element) {
+                var _this = this;
+                this.element = element;
+                this.endpoint = element.data("autocomplete");
+                this.hasValueField = element.data("autocomplete-value-field");
+                this.options = {
+                    source: function (request, response) {
+                        $.ajax({
+                            url: _this.endpoint,
+                            "type": "GET",
+                            data: { Input: _this.element.val() },
+                            global: false,
+                            success: function (data) {
+                                response(data);
+                            },
+                            error: function (data) {
+                                var message = "An error has occurred please try again";
+                                return { label: message, text: "", code: "" };
+                            },
+                            beforeSend: function () {
+                                _this.element.addClass("autocomplete-loading");
+                            },
+                            complete: function () {
+                                _this.element.removeClass("autocomplete-loading");
+                            }
+                        });
+                    },
+                    select: function (event, ui) {
+                        if (_this.hasValueField) {
+                            event.preventDefault();
+                            _this.element.val(ui.item.label);
+                            _this.element.next("input").val(ui.item.value);
+                        }
+                    }
+                };
+                this.element.autocomplete(this.options);
+            }
+            return AutoComplete;
+        }());
+        Core.AutoComplete = AutoComplete;
+        var AutoCompleteInitialiser = (function () {
+            function AutoCompleteInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            AutoCompleteInitialiser.prototype.initialise = function (container) {
+                var autocompleteList = container.find("[data-autocomplete]");
+                autocompleteList.each(function (index, element) {
+                    var autocomplete = new Midas.Core.AutoComplete($(element));
+                });
+            };
+            return AutoCompleteInitialiser;
+        }());
+        Core.AutoCompleteInitialiser = AutoCompleteInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.autocomplete.js.map

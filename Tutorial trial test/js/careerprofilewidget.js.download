@@ -1,0 +1,37 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var CareerProfileWidgetItem = (function (_super) {
+            __extends(CareerProfileWidgetItem, _super);
+            function CareerProfileWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            CareerProfileWidgetItem.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                var loadingPanelElement = this.element.find('#CareerProfileLoadingPanel');
+                var loadingPanel = loadingPanelElement.getAjaxLoadingPanel();
+                loadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    new Midas.Core.GoogleAnalyticsTracker().elementReady(loadingPanelElement);
+                });
+            };
+            return CareerProfileWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.CareerProfileWidgetItem = CareerProfileWidgetItem;
+        var CareerProfileWidgetItemInitialiser = (function () {
+            function CareerProfileWidgetItemInitialiser() {
+            }
+            CareerProfileWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new CareerProfileWidgetItem(widgetItemElement);
+            };
+            return CareerProfileWidgetItemInitialiser;
+        }());
+        Widgets.CareerProfileWidgetItemInitialiser = CareerProfileWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=CareerProfileWidget.js.map

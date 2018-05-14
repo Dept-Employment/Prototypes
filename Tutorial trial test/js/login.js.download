@@ -1,0 +1,1 @@
+setTimeout(function(){window.location="/LoginServices/Authenticate.do?TAM_OP=login&URL=/mygov";},1740000);
