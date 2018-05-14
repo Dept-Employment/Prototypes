@@ -1,0 +1,1 @@
+var Midas;(function(n){var t;(function(n){var t=function(){function n(){this.ready=function(){$("#MergeModal").modal()}}return n}();n.JobSeekerDashboardV2=t})(t=n.Business||(n.Business={}))})(Midas||(Midas={}));$(function(){var n=new Midas.Business.JobSeekerDashboardV2;n.ready()})

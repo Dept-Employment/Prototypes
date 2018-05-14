@@ -1,0 +1,266 @@
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Favourites = (function () {
+            function Favourites() {
+                var _this = this;
+                this.initialise = function (container) {
+                    _this.areaname = _this.getFavouriteArea();
+                    _this.getendpoint = "/" + _this.areaname + "/Favourites/GetFavouriteJobs/";
+                    _this.addendpoint = "/" + _this.areaname + "/Favourites/AddFavouriteJob/";
+                    _this.removeendpoint = "/" + _this.areaname + "/Favourites/DeleteFavouriteJob/";
+                    _this.favouritetype = "";
+                    _this.loadfavourites = true; //TODO AF how to determine this?
+                    container.find('span.favourite:not([data-favourite-fluent])').each(function (index, elem) {
+                        _this.clearFavourite($(_this));
+                        _this.addendpoint = $(elem).data('favourite-addurl');
+                        _this.removeendpoint = $(elem).data('favourite-removeurl');
+                    });
+                    container.find('span.favourite:not([data-favourite-fluent])').each(function (i, e) {
+                        var favid = $(e).data('jobid');
+                        _this.favouritetype = "data-jobid";
+                        if (favid == null || favid === "") {
+                            favid = $(e).data('sitecode');
+                            _this.favouritetype = "data-sitecode";
+                        }
+                        //Initialise toggle with default value
+                        var isFavourite = $(e).data('favourite-checked');
+                        _this.toggleFavourite(favid, $(e), isFavourite, false);
+                    });
+                    // Load favourites which then toggles the ones which are favourites
+                    if (_this.loadfavourites) {
+                    }
+                };
+                this.clearFavourite = function (element) {
+                    element.attr('role', 'checkbox');
+                    element.attr('aria-checked', element.data('favourite-checked'));
+                    element.attr('tabindex', 0);
+                };
+                this.getFavouriteJobs = function () {
+                    if (_this.areaname === "") {
+                        return;
+                    }
+                    $.ajax({
+                        type: "GET",
+                        contentType: "application/json; charset=utf-8",
+                        url: _this.getendpoint,
+                        data: '',
+                        processData: false,
+                        dataType: "json",
+                        success: function (response) {
+                            $(response).each(function (i, e) {
+                                _this.toggleFavourite(e.favid, $("span.favourite[" + _this.favouritetype + "='" + e.favid + "']:not([data-favourite-fluent])"), true, true);
+                            });
+                        },
+                        error: function (errorRespA, errorRespB, errorRespC) {
+                            this.alertError("An error occurred while retrieving favourite jobs.");
+                        },
+                        beforeSend: Midas.Core.ajax.beforeSend,
+                        complete: function () {
+                        }
+                    });
+                };
+                this.getFavouriteArea = function () {
+                    var areaName = "";
+                    if (Midas.Core.currentPage.settings.isJobseeker())
+                        areaName = "jobseekers";
+                    else if (Midas.Core.currentPage.settings.isEmployer())
+                        areaName = "employers";
+                    return areaName;
+                };
+                this.addFavourite = function (favid, refreshJobs) {
+                    if (refreshJobs === void 0) { refreshJobs = true; }
+                    var values;
+                    if (_this.areaname == "") {
+                        return;
+                    }
+                    var url = $(_this).data('favourite-addurl');
+                    if (url == null || url === "") {
+                        url = _this.addendpoint;
+                    }
+                    if (url != null && url.indexOf('provider') > 0) {
+                        var elem = $("span.favourite[data-sitecode='" + favid + "']:not([data-favourite-fluent])");
+                        values = {
+                            OrgCode: $(elem).data('orgcode'),
+                            SiteCode: favid,
+                            ContractTypeCode: $(elem).data('providertype')
+                        };
+                    }
+                    else {
+                        values = { "JobID": favid };
+                    }
+                    $.post(url, values, function (response, status) {
+                        if (status === "success") {
+                            if (response.indexOf("Error") >= 0) {
+                                _this.alertError(response);
+                                return;
+                            }
+                            if (refreshJobs) {
+                                _this.toggleFavourite(favid, $("span.favourite[" + _this.favouritetype + "='" + favid + "']:not([data-favourite-fluent])"), true, true);
+                                if ($('#favouriteJobs').length) {
+                                    _this.getFavouriteJobs();
+                                }
+                            }
+                        }
+                        else {
+                            _this.alertError('Could not add this favourite due to an error.');
+                        }
+                    }, "json");
+                };
+                this.removeFavourite = function (favid, refreshJobs) {
+                    if (refreshJobs === void 0) { refreshJobs = true; }
+                    var values;
+                    if (_this.areaname == "") {
+                        return;
+                    }
+                    var url = $(_this).data('favourite-removeurl');
+                    if (url == null || url === "") {
+                        url = _this.removeendpoint;
+                    }
+                    if (url != null && url.indexOf('provider') > 0) {
+                        var elem = $("span.favourite[data-sitecode='" + favid + "']:not([data-favourite-fluent])");
+                        values = {
+                            OrgCode: $(elem).data('orgcode'),
+                            SiteCode: favid,
+                            ContractTypeCode: $(elem).data('providertype')
+                        };
+                    }
+                    else {
+                        values = { "JobID": favid };
+                    }
+                    $.post(url, values, function (response, status) {
+                        if (status === "success") {
+                            if (refreshJobs) {
+                                _this.toggleFavourite(favid, $("span.favourite[" + _this.favouritetype + "='" + favid + "']:not([data-favourite-fluent])"), false, true);
+                                if ($('#favouriteJobs').length) {
+                                    _this.getFavouriteJobs();
+                                }
+                            }
+                        }
+                        else {
+                            _this.alertError('Could not add this favourite due to an error.');
+                        }
+                    }, "json");
+                };
+                this.toggleFavourite = function (favid, element, isfavourite, raiseEvents) {
+                    element.each(function (i, e) {
+                        var favControl = $(e);
+                        var itemDesciption = favControl.attr('data-item-description');
+                        if (isfavourite) {
+                            var icon = favControl.children('.favouriteicon');
+                            icon.addClass('filled');
+                            favControl.unbind('click');
+                            favControl.click(function (e) {
+                                _this.removeFavourite.call(e, favid);
+                                return false;
+                            });
+                            favControl.unbind('keydown');
+                            favControl.unbind('keyup');
+                            favControl.keydown(function (e) {
+                                if (e.which == 32) {
+                                    // Prevent browser from moving to the bottom of the page when pressing spacebar
+                                    e.preventDefault();
+                                }
+                            });
+                            favControl.keyup(function (e) {
+                                if (e.which == 32) {
+                                    e.preventDefault();
+                                    _this.removeFavourite.call(e, favid);
+                                    return false;
+                                }
+                            });
+                            var title = favControl.attr('title');
+                            if (title != null && title !== "") {
+                                if (itemDesciption === "template") {
+                                    favControl.attr('title', favControl.attr('title').replace("Save", "Remove"));
+                                    favControl.attr('title', favControl.attr('title').replace("as a template", "template"));
+                                }
+                                else {
+                                    favControl.attr('title', title.replace("Add", "Remove"));
+                                }
+                            }
+                            favControl.find(".readers").each(function (i, e) {
+                                var text = $(e).text();
+                                if (itemDesciption === "template") {
+                                    $(e).text(text.replace("Save", "Remove"));
+                                    $(e).text(text.replace("as a template", "template"));
+                                }
+                                else {
+                                    $(e).text(text.replace("Add", "Remove"));
+                                }
+                            });
+                            favControl.data("favourite-checked", isfavourite);
+                            favControl.attr("aria-checked", isfavourite.toString());
+                            if (raiseEvents) {
+                                favControl.trigger('change', [isfavourite]);
+                            }
+                        }
+                        else {
+                            var icon = favControl.children('.favouriteicon');
+                            icon.removeClass('filled');
+                            favControl.unbind('click');
+                            favControl.click(function (e) {
+                                _this.addFavourite.call(_this, favid);
+                                return false;
+                            });
+                            favControl.unbind('keydown');
+                            favControl.unbind('keyup');
+                            favControl.keydown(function (e) {
+                                if (e.which == 32) {
+                                    // Prevent browser from moving to the bottom of the page when pressing spacebar
+                                    e.preventDefault();
+                                }
+                            });
+                            favControl.keyup(function (e) {
+                                if (e.which == 32) {
+                                    e.preventDefault();
+                                    this.addFavourite.call(this, favid);
+                                    return false;
+                                }
+                            });
+                            var title = favControl.attr('title');
+                            if (title != null && title !== "") {
+                                if (itemDesciption === "template") {
+                                    favControl.attr('title', favControl.attr('title').replace("Remove", "Save"));
+                                    if (!~favControl.attr('title').indexOf(" as a template"))
+                                        favControl.attr('title', favControl.attr('title').replace(" template", " as a template"));
+                                }
+                                else {
+                                    favControl.attr('title', favControl.attr('title').replace("Remove", "Add"));
+                                }
+                            }
+                            favControl.find(".readers").each(function (i, e) {
+                                var text = $(e).text();
+                                if (itemDesciption === "template") {
+                                    $(e).text(text.replace("Remove", "Save"));
+                                    if (!~$(e).text().indexOf(" as a template"))
+                                        $(e).text(text.replace(" template", " as a template"));
+                                }
+                                else {
+                                    $(e).text(text.replace("Remove", "Add"));
+                                }
+                            });
+                            favControl.data("favourite-checked", isfavourite);
+                            favControl.attr("aria-checked", isfavourite.toString());
+                            if (raiseEvents) {
+                                favControl.trigger('change', [isfavourite]);
+                            }
+                        }
+                    });
+                };
+                this.alertError = function (message) {
+                    var errorModal = $('#ErrorModal');
+                    errorModal.find('.modal-body').html(message);
+                    errorModal.modal({ show: true });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return Favourites;
+        }());
+        Core.Favourites = Favourites;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.favourites.js.map

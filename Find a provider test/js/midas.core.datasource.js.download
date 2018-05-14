@@ -1,0 +1,609 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var DataSource = (function (_super) {
+            __extends(DataSource, _super);
+            function DataSource(settings) {
+                var _this = this;
+                _super.call(this);
+                this.setData = function (data) {
+                    var dataArray = new Array();
+                    for (var item in data) {
+                        dataArray.push(new Core.Model(item, _this.settings.schema.model));
+                    }
+                    _this.dataInternal = dataArray;
+                };
+                this.processData = function (data, e) {
+                    if (e === void 0) { e = null; }
+                    var settings = { skip: null, take: null, sort: null, filter: null, group: null };
+                    if (_this.settings.serverPaging !== true) {
+                        settings.skip = _this.skipInternal;
+                        settings.take = _this.take;
+                        if (settings.skip === undefined && _this.pageInternal !== undefined && _this.pageSizeInternal !== undefined) {
+                            settings.skip = (_this.pageInternal - 1) * _this.pageSizeInternal;
+                        }
+                    }
+                    var result = new DataQuery(data, settings).process();
+                    if (result.total !== undefined && !_this.settings.serverFiltering) {
+                        _this.totalInternal = result.total;
+                    }
+                    e = e || {};
+                    e.items = e.items || _this.data;
+                    _this.trigger(DataSourceEvents[DataSourceEvents.Change], e);
+                };
+                this.read = function (requestData) {
+                    if (requestData === void 0) { requestData = null; }
+                    requestData = _this.getRequestData(requestData);
+                    var isPrevented = _this.trigger(DataSourceEvents[DataSourceEvents.RequestStarting], { type: Core.DataRequestType[Core.DataRequestType.Read], data: requestData });
+                    if (!isPrevented) {
+                        _this.transport.read({
+                            data: requestData,
+                            success: function (data) {
+                                _this.readSuccess(data);
+                            }
+                        });
+                    }
+                };
+                this.settings = settings;
+                this.pageInternal = settings.page || (settings.pageSize ? 1 : undefined);
+                this.pageSizeInternal = settings.pageSize;
+                if (settings.data != null) {
+                    this.totalInternal = settings.data.Total;
+                }
+                this.filtersInternal = normalizeFilter(settings.filters);
+                this.sortsInternal = normalizeSort(settings.sorts, null);
+                this.groupsInternal = normalizeGroup(settings.groups, null);
+                this.transport = new Core.AjaxTransport($.extend(settings.transport, { data: settings.data }));
+            }
+            DataSource.create = function (settings) {
+                var dataSource = settings || {}, data = dataSource.data;
+                dataSource.data = data;
+                return dataSource instanceof DataSource ? dataSource : new DataSource(dataSource);
+            };
+            Object.defineProperty(DataSource.prototype, "settings", {
+                get: function () {
+                    return this.settingsField;
+                },
+                set: function (settings) {
+                    this.settingsField = settings;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DataSource.prototype, "data", {
+                get: function () {
+                    return this.dataInternal;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DataSource.prototype, "total", {
+                get: function () {
+                    return this.totalInternal;
+                },
+                set: function (value) {
+                    this.totalInternal = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataSource.prototype.getRequestData = function (requestData) {
+                requestData = $.extend({
+                    take: this.take,
+                    skip: this.skip,
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    filter: this.filters,
+                    sort: this.sorts,
+                    group: this.groups
+                }, requestData);
+                if (!this.settings.serverPaging) {
+                    delete requestData.take;
+                    delete requestData.skip;
+                    delete requestData.page;
+                    delete requestData.pageSize;
+                }
+                if (!this.settings.serverFiltering) {
+                    delete requestData.filter;
+                }
+                if (!this.settings.serverSorting) {
+                    delete requestData.sort;
+                }
+                if (!this.settings.serverGrouping) {
+                    delete requestData.group;
+                }
+                var framework = $('#Framework');
+                if (framework.length) {
+                    requestData.Framework = framework.val();
+                }
+                return requestData;
+            };
+            DataSource.prototype.view = function (value) {
+                if (value === void 0) { value = null; }
+                return this.data;
+            };
+            DataSource.prototype.getByUniqueId = function (id) {
+                var data = this.data;
+                if (!data) {
+                    return null;
+                }
+                var idx, length;
+                for (idx = 0, length = data.length; idx < length; idx++) {
+                    if (data[idx].uniqueId == id) {
+                        return data[idx];
+                    }
+                }
+                return null;
+            };
+            DataSource.prototype.add = function (item) {
+                return this.insert(this.data.length, item);
+            };
+            DataSource.prototype.insert = function (index, item) {
+                if (!(item instanceof Core.Model)) {
+                    item = this.createNewModel(item);
+                }
+                this.data.splice(index, 0, item);
+                this.processData(this.data);
+                return item;
+            };
+            DataSource.prototype.createNewModel = function (model) {
+                if (this.settings.schema.model) {
+                    return new Core.Model(model, this.settings.schema.model);
+                }
+                if (model instanceof Core.ObservableObject) {
+                    return model;
+                }
+                return new Core.ObservableObject(model);
+            };
+            DataSource.prototype.create = function (item) {
+                var _this = this;
+                var isPrevented = this.trigger(DataSourceEvents[DataSourceEvents.RequestStarting], { type: Core.DataRequestType[Core.DataRequestType.Create] });
+                if (!isPrevented) {
+                    this.transport.create({
+                        data: item,
+                        success: function (data) {
+                            _this.createSuccess(data);
+                        }
+                    });
+                }
+            };
+            DataSource.prototype.createSuccess = function (data) {
+                this.trigger(DataSourceEvents[DataSourceEvents.RequestEnded], { type: Core.DataRequestType[Core.DataRequestType.Create] });
+                this.read();
+            };
+            DataSource.prototype.readSuccess = function (data) {
+                this.trigger(DataSourceEvents[DataSourceEvents.RequestEnded], { type: Core.DataRequestType[Core.DataRequestType.Read], data: data });
+                var dataArray = new Array();
+                var idx, length;
+                for (idx = 0, length = data.Data.length; idx < length; idx++) {
+                    dataArray.push(new Core.Model(data.Data[idx], this.settings.schema.model));
+                }
+                this.dataInternal = dataArray;
+                this.totalInternal = data.Total;
+                this.processData(data.Data);
+            };
+            DataSource.prototype.save = function (item, formData) {
+                var _this = this;
+                var idx, length, dataItemToSave;
+                for (idx = 0, length = this.data.length; idx < length; idx++) {
+                    var dataItem = this.data[idx];
+                    if (dataItem.uniqueId == item.uniqueId) {
+                        dataItemToSave = dataItem;
+                        break;
+                    }
+                }
+                if (dataItemToSave != null) {
+                    var dataRequestType = dataItemToSave.isNew() ? Core.DataRequestType.Create : Core.DataRequestType.Update;
+                    var isPrevented = this.trigger(DataSourceEvents[DataSourceEvents.RequestStarting], { type: Core.DataRequestType[dataRequestType] });
+                    if (!isPrevented) {
+                        if (dataItemToSave.isNew()) {
+                            this.transport.create({
+                                data: formData,
+                                success: function (data) {
+                                    _this.saveSuccess(data, dataItemToSave, dataRequestType);
+                                }
+                            });
+                        }
+                        else {
+                            this.transport.update({
+                                data: formData,
+                                success: function (data) {
+                                    _this.saveSuccess(data, dataItemToSave, dataRequestType);
+                                }
+                            });
+                        }
+                    }
+                }
+                return dataItemToSave;
+            };
+            DataSource.prototype.saveSuccess = function (data, savedItem, requestType) {
+                this.trigger(DataSourceEvents[DataSourceEvents.RequestEnded], { type: Core.DataRequestType[requestType], response: data, item: savedItem });
+            };
+            DataSource.prototype.delete = function (item) {
+                var _this = this;
+                var idx, length, dataItemToDelete;
+                for (idx = 0, length = this.data.length; idx < length; idx++) {
+                    var dataItem = this.data[idx];
+                    if (dataItem.uniqueId == item.uniqueId) {
+                        dataItemToDelete = dataItem;
+                        break;
+                    }
+                }
+                if (dataItemToDelete != null) {
+                    var isPrevented = this.trigger(DataSourceEvents[DataSourceEvents.RequestStarting], { type: Core.DataRequestType[Core.DataRequestType.Delete] });
+                    if (!isPrevented) {
+                        this.transport.delete({
+                            data: dataItemToDelete,
+                            success: function (data) {
+                                _this.deleteSuccess(data, dataItemToDelete);
+                            }
+                        });
+                    }
+                }
+                return dataItemToDelete;
+            };
+            DataSource.prototype.deleteSuccess = function (data, deletedItem) {
+                this.trigger(DataSourceEvents[DataSourceEvents.RequestEnded], { type: Core.DataRequestType[Core.DataRequestType.Delete], response: data });
+                var idx, length;
+                for (idx = 0, length = this.data.length; idx < length; idx++) {
+                    var dataItem = this.data[idx];
+                    if (dataItem.uniqueId == deletedItem.uniqueId) {
+                        this.data.splice(idx, 1);
+                        this.totalInternal = this.totalInternal - 1;
+                        break;
+                    }
+                }
+                this.trigger(DataSourceEvents[DataSourceEvents.Change], { action: "delete", items: [deletedItem] });
+            };
+            DataSource.prototype.cancelChanges = function (model) {
+                var idx = this.indexOfModel(model);
+                if (idx >= 0) {
+                    if (model.isNew()) {
+                        this.data.splice(idx, 1);
+                    }
+                }
+            };
+            DataSource.prototype.syncModel = function (model, data) {
+                var htmlFieldPrefix = this.settings.htmlFieldPrefix;
+                for (var idx in data) {
+                    var field = data[idx];
+                    var fieldName = field.name;
+                    if (htmlFieldPrefix != null) {
+                        fieldName = fieldName.replace(htmlFieldPrefix + ".", "");
+                    }
+                    model[fieldName] = field.value;
+                }
+                return model;
+            };
+            DataSource.prototype.indexOf = function (model) {
+                return this.indexOfModel(model);
+            };
+            DataSource.prototype.indexOfModel = function (model) {
+                if (model) {
+                    var idx, length;
+                    for (idx = 0, length = this.data.length; idx < length; idx++) {
+                        if (this.data[idx].uniqueId == model.uniqueId) {
+                            return idx;
+                        }
+                    }
+                }
+                return -1;
+            };
+            //#region Paging
+            DataSource.prototype.totalPages = function () {
+                var pageSize = this.pageSize || this.total;
+                return Math.ceil((this.total || 0) / pageSize);
+            };
+            Object.defineProperty(DataSource.prototype, "page", {
+                get: function () {
+                    var skip = this.skip();
+                    return skip !== undefined ? Math.round((skip || 0) / (this.take || 1)) + 1 : undefined;
+                },
+                set: function (value) {
+                    value = Math.max(Math.min(Math.max(value, 1), this.totalPages()), 1);
+                    this.pageInternal = value;
+                    this.queryInternal({ page: value });
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DataSource.prototype, "pageSize", {
+                get: function () {
+                    return this.take;
+                },
+                set: function (value) {
+                    this.pageSizeInternal = value;
+                    this.queryInternal({ pageSize: value, page: 1 });
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataSource.prototype.skip = function () {
+                if (this.skipInternal === undefined) {
+                    return (this.pageInternal !== undefined ? (this.pageInternal - 1) * (this.take || 1) : undefined);
+                }
+                return this.skipInternal;
+            };
+            Object.defineProperty(DataSource.prototype, "take", {
+                get: function () {
+                    return this.takeInternal || this.pageSizeInternal;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            //#endregion
+            //#region Querying, Filtering and Sorting
+            DataSource.prototype.query = function (settings) {
+                var result;
+                var remote = this.settings.serverSorting || this.settings.serverPaging || this.settings.serverFiltering || this.settings.serverGrouping;
+                if (remote || (this.dataInternal === undefined || this.dataInternal.length === 0)) {
+                    return this.read(this.mergeSettings(settings));
+                }
+                var isPrevented = this.trigger(DataSourceEvents[DataSourceEvents.RequestStarting], { type: Core.DataRequestType[Core.DataRequestType.Read] });
+                if (!isPrevented) {
+                    settings = this.mergeSettings(settings);
+                    result = new DataQuery(this.dataInternal, settings).process();
+                    if (!this.settings.serverFiltering) {
+                        if (result.total !== undefined) {
+                            this.total = result.total;
+                        }
+                        else {
+                            this.total = this.dataInternal.length;
+                        }
+                    }
+                    this.view(result.data);
+                    this.trigger(DataSourceEvents[DataSourceEvents.RequestEnded], { type: Core.DataRequestType[Core.DataRequestType.Read] });
+                    this.trigger(DataSourceEvents[DataSourceEvents.Change], { items: result.data });
+                }
+                return $.Deferred().resolve(isPrevented).promise();
+            };
+            DataSource.prototype.queryInternal = function (settings) {
+                return this.query($.extend({}, {
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    filter: this.filters,
+                    sort: this.sorts
+                }, settings));
+            };
+            DataSource.prototype.mergeSettings = function (settings) {
+                if (settings != null) {
+                    this.pageSizeInternal = settings.pageSize;
+                    this.pageInternal = settings.page;
+                    this.filtersInternal = settings.filter;
+                    this.sortsInternal = settings.sort;
+                    this.groupsInternal = settings.group;
+                    this.skipInternal = settings.skip;
+                    this.takeInternal = settings.take;
+                    if (this.skipInternal === undefined) {
+                        this.skipInternal = this.skip();
+                        settings.skip = this.skip();
+                    }
+                    if (this.takeInternal === undefined && this.pageSize !== undefined) {
+                        this.takeInternal = this.pageSizeInternal;
+                        settings.take = this.takeInternal;
+                    }
+                    if (settings.filter) {
+                        this.filtersInternal = settings.filter = normalizeFilter(settings.filter);
+                    }
+                    if (settings.sort) {
+                        this.sortsInternal = settings.sort = normalizeSort(settings.sort, null);
+                    }
+                    if (settings.group) {
+                        this.groupsInternal = settings.group = normalizeGroup(settings.group, null);
+                    }
+                }
+                return settings;
+            };
+            Object.defineProperty(DataSource.prototype, "filters", {
+                get: function () {
+                    return this.filtersInternal;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataSource.prototype.filter = function (value) {
+                this.trigger("reset");
+                this.queryInternal({ filter: value, page: 1 });
+            };
+            Object.defineProperty(DataSource.prototype, "sorts", {
+                get: function () {
+                    return this.sortsInternal;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataSource.prototype.sort = function (value) {
+                this.queryInternal({ sort: value });
+            };
+            Object.defineProperty(DataSource.prototype, "groups", {
+                get: function () {
+                    return this.groupsInternal;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            DataSource.prototype.group = function (value) {
+                this.queryInternal({ group: value });
+            };
+            return DataSource;
+        }(Core.Observable));
+        Core.DataSource = DataSource;
+        var TemplateDataSource = (function (_super) {
+            __extends(TemplateDataSource, _super);
+            function TemplateDataSource(settings) {
+                _super.call(this, settings);
+            }
+            TemplateDataSource.create = function (settings) {
+                var dataSource = settings || {}, data = dataSource.data, dataHtml = dataSource.dataHtml, dataEditHtml = dataSource.dataEditHtml, idx, length;
+                if (data && dataHtml && dataHtml.length >= data.Data.length) {
+                    for (idx = 0, length = data.Data.length; idx < length; idx++) {
+                        data.Data[idx].Html = dataHtml[idx];
+                    }
+                }
+                if (data && dataEditHtml && dataEditHtml.length >= data.Data.length) {
+                    for (idx = 0, length = data.Data.length; idx < length; idx++) {
+                        data.Data[idx].EditHtml = dataEditHtml[idx];
+                    }
+                }
+                dataSource.data = data;
+                return dataSource instanceof TemplateDataSource ? dataSource : new TemplateDataSource(dataSource);
+            };
+            TemplateDataSource.prototype.readSuccess = function (data) {
+                var idx, length;
+                if (data.Data && data.DataHtml) {
+                    for (idx = 0, length = data.DataHtml.length; idx < length; idx++) {
+                        data.Data[idx].Html = data.DataHtml[idx];
+                    }
+                }
+                if (data.Data && data.DataEditHtml) {
+                    for (idx = 0, length = data.DataEditHtml.length; idx < length; idx++) {
+                        data.Data[idx].EditHtml = data.DataEditHtml[idx];
+                    }
+                }
+                _super.prototype.readSuccess.call(this, data);
+            };
+            TemplateDataSource.prototype.insert = function (index, model) {
+                model.Html = this.settings.addItemHtml;
+                model.EditHtml = this.settings.addItemEditHtml;
+                model = _super.prototype.insert.call(this, index, model);
+                return model;
+            };
+            TemplateDataSource.prototype.getRequestData = function (requestData) {
+                requestData = _super.prototype.getRequestData.call(this, requestData);
+                requestData.partialViewName = this.settings.partialViewName;
+                requestData.editingEnabled = this.settings.editingEnabled;
+                requestData.editorTemplateName = this.settings.editorTemplateName;
+                requestData.htmlFieldPrefix = this.settings.htmlFieldPrefix;
+                return requestData;
+            };
+            return TemplateDataSource;
+        }(DataSource));
+        Core.TemplateDataSource = TemplateDataSource;
+        var DataQuery = (function () {
+            function DataQuery(data, settings) {
+                var _this = this;
+                this.data = data;
+                this.settings = settings;
+                this.toArray = function () {
+                    return _this.data;
+                };
+                this.range = function (index, count) {
+                    _this.data = _this.data.slice(index, index + count);
+                };
+                this.skip = function (count) {
+                    _this.data = _this.data.slice(count);
+                };
+                this.take = function (count) {
+                    _this.data = _this.data.slice(0, count);
+                };
+            }
+            DataQuery.prototype.process = function () {
+                var settings = this.settings || {};
+                var group = settings.group, filterCallback = settings.filterCallback, filter = settings.filter, skip = settings.skip, take = settings.take;
+                if (skip !== undefined && take !== undefined) {
+                    this.range(skip, take);
+                }
+                var total = this.data.length;
+                return {
+                    total: total,
+                    data: this.toArray()
+                };
+            };
+            return DataQuery;
+        }());
+        Core.DataQuery = DataQuery;
+        var operatorMap = {
+            "==": "eq",
+            equals: "eq",
+            isequalto: "eq",
+            equalto: "eq",
+            equal: "eq",
+            "!=": "neq",
+            ne: "neq",
+            notequals: "neq",
+            isnotequalto: "neq",
+            notequalto: "neq",
+            notequal: "neq",
+            "<": "lt",
+            islessthan: "lt",
+            lessthan: "lt",
+            less: "lt",
+            "<=": "lte",
+            le: "lte",
+            islessthanorequalto: "lte",
+            lessthanequal: "lte",
+            ">": "gt",
+            isgreaterthan: "gt",
+            greaterthan: "gt",
+            greater: "gt",
+            ">=": "gte",
+            isgreaterthanorequalto: "gte",
+            greaterthanequal: "gte",
+            ge: "gte",
+            notsubstringof: "doesnotcontain"
+        };
+        function normalizeOperator(expression) {
+            var idx, length, filter, operator, filters = expression.filters;
+            if (filters) {
+                for (idx = 0, length = filters.length; idx < length; idx++) {
+                    filter = filters[idx];
+                    operator = filter.operator;
+                    if (operator && typeof operator === "string") {
+                        filter.operator = operatorMap[operator.toLowerCase()] || operator;
+                    }
+                    normalizeOperator(filter);
+                }
+            }
+        }
+        function normalizeFilter(expression) {
+            if (expression && !$.isEmptyObject(expression)) {
+                if ($.isArray(expression) || !expression.filters) {
+                    expression = {
+                        logic: "and",
+                        filters: $.isArray(expression) ? expression : [expression]
+                    };
+                }
+                normalizeOperator(expression);
+                return expression;
+            }
+        }
+        function normalizeSort(field, dir) {
+            if (field) {
+                var descriptor = typeof field === "string" ? { field: field, dir: dir } : field, descriptors = $.isArray(descriptor) ? descriptor : (descriptor !== undefined ? [descriptor] : []);
+                return $.grep(descriptors, function (d) { return !!d.dir; });
+            }
+        }
+        function normalizeGroup(field, dir) {
+            var descriptor = typeof field === "string" ? { field: field, dir: dir } : field, descriptors = $.isArray(descriptor) ? descriptor : (descriptor !== undefined ? [descriptor] : []);
+            return map(descriptors, function (d) { return { field: d.field, dir: d.dir || "asc", aggregates: d.aggregates }; });
+        }
+        function map(array, callback) {
+            var idx, length = array.length, result = new Array(length);
+            for (idx = 0; idx < length; idx++) {
+                result[idx] = callback(array[idx], idx, array);
+            }
+            return result;
+        }
+        (function (DataSourceEvents) {
+            DataSourceEvents[DataSourceEvents["Change"] = 0] = "Change";
+            DataSourceEvents[DataSourceEvents["Error"] = 1] = "Error";
+            DataSourceEvents[DataSourceEvents["RequestStarting"] = 2] = "RequestStarting";
+            DataSourceEvents[DataSourceEvents["RequestEnded"] = 3] = "RequestEnded";
+        })(Core.DataSourceEvents || (Core.DataSourceEvents = {}));
+        var DataSourceEvents = Core.DataSourceEvents;
+        (function (DataEvents) {
+            DataEvents[DataEvents["DataBinding"] = 0] = "DataBinding";
+            DataEvents[DataEvents["DataBound"] = 1] = "DataBound";
+        })(Core.DataEvents || (Core.DataEvents = {}));
+        var DataEvents = Core.DataEvents;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.datasource.js.map

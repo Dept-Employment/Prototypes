@@ -1,0 +1,72 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Ajax = (function () {
+            function Ajax() {
+                this.initialiseLoaders = function () {
+                    $(document).ajaxStart(function () {
+                        Midas.Core.Loader.showLoader();
+                    });
+                    $(document).ajaxStop(function () {
+                        Midas.Core.Loader.hideLoader();
+                    });
+                };
+                this.beforeSend = function (request, settings) {
+                    if (settings.type.toLowerCase() !== 'post') {
+                        return;
+                    }
+                    var requestVerificationToken = $("[name='__RequestVerificationToken']").val();
+                    if (requestVerificationToken !== undefined) {
+                        request.setRequestHeader('__RequestVerificationToken', requestVerificationToken);
+                    }
+                };
+                this.handleSuccess = function (event, request, settings) {
+                    Midas.Core.currentPage.sessionTimer.reset();
+                };
+                this.handleError = function (event, request, settings) {
+                    // If the user's session has expired then redirect the user to the session expired page.
+                    if (request.status === 500 && request.statusText === "Session Expired") {
+                        window.location.href = "/SessionExpired";
+                        return;
+                    }
+                    // If the user's login has expired then redirect the user to the login page.
+                    if (request.status === 500 && request.statusText === "Login Expired") {
+                        Midas.Core.currentPage.showErrorModal("We were unable to complete your request as your login session has expired. Click 'OK' to refresh the page, and you may be asked to login again.", true);
+                        return;
+                    }
+                    // MyGov login expired.
+                    if (request.responseText != null && request.responseText.indexOf("my.gov.au") > -1) {
+                        Midas.Core.currentPage.showErrorModal("We were unable to complete your request as your login session has expired. Click 'OK' to refresh the page, and you may be asked to login again.", true);
+                        return;
+                    }
+                    // If the ajax error is not already specifically being handled then show a generic error message.
+                    if (settings.error === undefined) {
+                        Midas.Core.currentPage.showGenericErrorModal();
+                    }
+                };
+            }
+            Ajax.prototype.initialise = function () {
+                this.initialiseGlobalHandlers();
+                this.initialiseLoaders();
+            };
+            Ajax.prototype.initialiseGlobalHandlers = function () {
+                var _this = this;
+                $(document).ajaxSend(function (event, request, settings) {
+                    _this.beforeSend(request, settings);
+                });
+                $(document).ajaxSuccess(this.handleSuccess);
+                $(document).ajaxError(this.handleError);
+            };
+            return Ajax;
+        }());
+        Core.Ajax = Ajax;
+        Core.ajax = new Midas.Core.Ajax();
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    Midas.Core.ajax.initialise();
+});
+//# sourceMappingURL=midas.core.ajax.js.map

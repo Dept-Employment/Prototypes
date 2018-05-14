@@ -1,0 +1,143 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var RemoteTransport = (function () {
+            function RemoteTransport(settings) {
+                this.settings = settings;
+                this.settings = $.extend(true, {}, this.defaultSettings, settings);
+            }
+            Object.defineProperty(RemoteTransport.prototype, "defaultSettings", {
+                get: function () {
+                    return {};
+                },
+                enumerable: true,
+                configurable: true
+            });
+            RemoteTransport.prototype.create = function (settings) {
+                return $.ajax(this.setup(settings, DataRequestType.Create));
+            };
+            RemoteTransport.prototype.read = function (settings) {
+                return $.ajax(this.setup(settings, DataRequestType.Read));
+            };
+            RemoteTransport.prototype.update = function (settings) {
+                return $.ajax(this.setup(settings, DataRequestType.Update));
+            };
+            RemoteTransport.prototype.delete = function (settings) {
+                return $.ajax(this.setup(settings, DataRequestType.Delete));
+            };
+            RemoteTransport.prototype.setup = function (settings, type) {
+                settings = settings || {};
+                var requestTypeSettings = this.settings[DataRequestType[type].toLowerCase()];
+                settings = $.extend(true, {}, requestTypeSettings, settings);
+                if (settings.data.filter) {
+                    settings.data.filter = JSON.stringify(settings.data.filter);
+                }
+                else {
+                    settings.data.filter = "";
+                }
+                if (settings.data.sort) {
+                    settings.data.sort = JSON.stringify(settings.data.sort);
+                }
+                else {
+                    settings.data.sort = "";
+                }
+                return settings;
+            };
+            return RemoteTransport;
+        }());
+        Core.RemoteTransport = RemoteTransport;
+        var AjaxTransport = (function (_super) {
+            __extends(AjaxTransport, _super);
+            function AjaxTransport() {
+                _super.apply(this, arguments);
+            }
+            Object.defineProperty(AjaxTransport.prototype, "defaultSettings", {
+                get: function () {
+                    return {
+                        create: {
+                            type: "POST"
+                        },
+                        read: {
+                            type: "POST"
+                        },
+                        update: {
+                            type: "POST"
+                        },
+                        delete: {
+                            type: "POST"
+                        },
+                        prefix: ""
+                    };
+                },
+                enumerable: true,
+                configurable: true
+            });
+            AjaxTransport.prototype.create = function (settings) {
+                var data = this.settings.data, url = this.settings.create.url;
+                if (url) {
+                    return _super.prototype.create.call(this, settings);
+                }
+                else {
+                    settings.success(data, null, null);
+                }
+                return null;
+            };
+            AjaxTransport.prototype.read = function (settings) {
+                var data = this.settings.data, url = this.settings.read.url;
+                if ($.isPlainObject(data)) {
+                    if (url) {
+                        this.settings.data = null;
+                    }
+                    if (!data.Data.length && url) {
+                        settings.success(data, null, null);
+                    }
+                    else {
+                        settings.success(data, null, null);
+                    }
+                }
+                else {
+                    return _super.prototype.read.call(this, settings);
+                }
+                return null;
+            };
+            AjaxTransport.prototype.update = function (settings) {
+                var data = this.settings.data, url = this.settings.update.url;
+                if (url) {
+                    return _super.prototype.update.call(this, settings);
+                }
+                else {
+                    settings.success(data, null, null);
+                }
+                return null;
+            };
+            AjaxTransport.prototype.delete = function (settings) {
+                var data = this.settings.data, url = this.settings.delete.url;
+                if (url) {
+                    return _super.prototype.delete.call(this, settings);
+                }
+                else {
+                    settings.success(data, null, null);
+                }
+                return null;
+            };
+            return AjaxTransport;
+        }(RemoteTransport));
+        Core.AjaxTransport = AjaxTransport;
+        (function (DataRequestType) {
+            DataRequestType[DataRequestType["Create"] = 0] = "Create";
+            DataRequestType[DataRequestType["Read"] = 1] = "Read";
+            DataRequestType[DataRequestType["Update"] = 2] = "Update";
+            DataRequestType[DataRequestType["Delete"] = 3] = "Delete";
+        })(Core.DataRequestType || (Core.DataRequestType = {}));
+        var DataRequestType = Core.DataRequestType;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.datatransport.js.map

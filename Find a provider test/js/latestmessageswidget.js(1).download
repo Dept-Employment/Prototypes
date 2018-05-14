@@ -1,0 +1,49 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var EmployerLatestMessagesWidgetItem = (function (_super) {
+            __extends(EmployerLatestMessagesWidgetItem, _super);
+            function EmployerLatestMessagesWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            EmployerLatestMessagesWidgetItem.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                var latestMessagesLoadingElement = this.element.find('#EmployerLatestMessagesLoadingPanel');
+                var latestMessagesLoadingPanel = latestMessagesLoadingElement.getAjaxLoadingPanel();
+                latestMessagesLoadingPanel.element.on('click', 'a[data-openmessage]', function (e) {
+                    var target = $(e.currentTarget);
+                    var messageElement = target.closest('[data-messageid]');
+                    var messageRead = messageElement.data('messageread');
+                    if (!messageRead) {
+                        $.post(target.data('controlleractionurl'), { messageId: messageElement.data('messageid') }, function (result) {
+                            latestMessagesLoadingPanel.element.find('#InboxWidgetButton').find('.badge').text(result + " unread");
+                            messageElement.data('messageread', true);
+                            //messageElement.find('.li-title').toggleClass('unread', false).toggleClass('read', true);
+                            messageElement.find('span.fa')
+                                .toggleClass('fa-envelope', false)
+                                .toggleClass('fa-envelope-open', true);
+                        });
+                    }
+                });
+            };
+            return EmployerLatestMessagesWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.EmployerLatestMessagesWidgetItem = EmployerLatestMessagesWidgetItem;
+        var EmployerLatestMessagesWidgetItemInitialiser = (function () {
+            function EmployerLatestMessagesWidgetItemInitialiser() {
+            }
+            EmployerLatestMessagesWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new EmployerLatestMessagesWidgetItem(widgetItemElement);
+            };
+            return EmployerLatestMessagesWidgetItemInitialiser;
+        }());
+        Widgets.EmployerLatestMessagesWidgetItemInitialiser = EmployerLatestMessagesWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=LatestMessagesWidget.js.map

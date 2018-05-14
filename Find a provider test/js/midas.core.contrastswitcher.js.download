@@ -1,0 +1,41 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ContrastSwitcher = (function () {
+            function ContrastSwitcher() {
+                var _this = this;
+                this.ready = function () {
+                    _this.head = $('head');
+                    if (Midas.Core.Cookies.readCookie('high-contrast') === 'true') {
+                        _this.addHighContrastStyles();
+                    }
+                    $('.default-style').click(function (e) {
+                        e.preventDefault();
+                        $('[data-contrast-css]').remove();
+                        Midas.Core.Cookies.eraseCookie("high-contrast");
+                    });
+                    $('.wcag-style').click(function (e) {
+                        e.preventDefault();
+                        _this.addHighContrastStyles();
+                        Midas.Core.Cookies.createCookie("high-contrast", "true", 365);
+                    });
+                };
+                this.addHighContrastStyles = function () {
+                    if ($("[data-contrast-css]").length == 0) {
+                        _this.head.append('<link rel="stylesheet" data-contrast-css href="' + Midas.Core.currentPage.settings.highContrastCssUrl + '" type="text/css" />');
+                        $('[data-high-contrast]').each(function (index, element) {
+                            var pageUrl = $(element).data('high-contrast');
+                            _this.head.append('<link rel="stylesheet" data-contrast-css href="' + pageUrl + '" type="text/css" />');
+                        });
+                    }
+                };
+            }
+            return ContrastSwitcher;
+        }());
+        Core.ContrastSwitcher = ContrastSwitcher;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.contrastswitcher.js.map

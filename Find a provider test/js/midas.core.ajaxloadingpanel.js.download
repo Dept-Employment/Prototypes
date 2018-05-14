@@ -1,0 +1,99 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var AjaxLoadingPanel = (function (_super) {
+            __extends(AjaxLoadingPanel, _super);
+            function AjaxLoadingPanel(element) {
+                var _this = this;
+                _super.call(this, element, Core.ControlType.AjaxLoadingPanel, {});
+                this.refresh = function () {
+                    _this.load();
+                };
+            }
+            AjaxLoadingPanel.prototype.initialise = function () {
+                this.load();
+            };
+            Object.defineProperty(AjaxLoadingPanel.prototype, "loader", {
+                get: function () { return $(this.element).find('[data-loader]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(AjaxLoadingPanel.prototype, "alert", {
+                get: function () { return $(this.element).find('.alert'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(AjaxLoadingPanel.prototype, "contentElement", {
+                get: function () { return $(this.element).find('[data-content]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(AjaxLoadingPanel, "loadingEventName", {
+                get: function () { return "Loading"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(AjaxLoadingPanel, "loadedEventName", {
+                get: function () { return "Loaded"; },
+                enumerable: true,
+                configurable: true
+            });
+            AjaxLoadingPanel.prototype.load = function () {
+                this.loader.toggleClass("hidden", false);
+                this.alert.toggleClass("hidden", true);
+                this.contentElement.toggleClass("hidden", true);
+                this.trigger(Midas.Core.AjaxLoadingPanel.loadingEventName);
+                var settings = {
+                    url: this.settings.read.url,
+                    data: this.settings.readRequestData,
+                    type: "GET",
+                    success: $.proxy(function (response) {
+                        this.loader.toggleClass("hidden", true);
+                        this.contentElement.html(response);
+                        this.contentElement.toggleClass("hidden", false);
+                        this.trigger(Midas.Core.AjaxLoadingPanel.loadedEventName);
+                    }, this),
+                    error: $.proxy(function () {
+                        this.loader.toggleClass("hidden", true);
+                        this.alert.html("An unexpected technical issue occurred while loading the panel. Please try again later.");
+                        this.alert.toggleClass("hidden", false);
+                    }, this),
+                    global: false,
+                    cache: this.settings.read.cache
+                };
+                $.ajax(settings);
+            };
+            AjaxLoadingPanel.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.element.off(AjaxLoadingPanel.nameSpace);
+            };
+            AjaxLoadingPanel.nameSpace = ".coreAjaxLoadingPanel";
+            return AjaxLoadingPanel;
+        }(Core.Control));
+        Core.AjaxLoadingPanel = AjaxLoadingPanel;
+        var AjaxLoadingPanelInitialiser = (function () {
+            function AjaxLoadingPanelInitialiser() {
+                var _this = this;
+                this.initialise = function (container) {
+                    container.find('[data-ajaxloadingpanel]').each(function (index, element) {
+                        var ajaxLoadingPanel = new AjaxLoadingPanel($(element));
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return AjaxLoadingPanelInitialiser;
+        }());
+        Core.AjaxLoadingPanelInitialiser = AjaxLoadingPanelInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.ajaxloadingpanel.js.map

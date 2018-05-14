@@ -1,0 +1,60 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var EmployerFavouriteJobsWidgetItem = (function (_super) {
+            __extends(EmployerFavouriteJobsWidgetItem, _super);
+            function EmployerFavouriteJobsWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            EmployerFavouriteJobsWidgetItem.prototype.initialise = function () {
+                var _this = this;
+                _super.prototype.initialise.call(this);
+                var loadingPanelElement = this.element.find('#LoadingEmpJobTemplatesPanel');
+                var loadingPanel = loadingPanelElement.getAjaxLoadingPanel();
+                loadingPanel.element.on('click', 'a.remove-item', function (ce) {
+                    ce.preventDefault();
+                    var removeElement = $(ce.target);
+                    $.ajax({
+                        url: removeElement.attr("href"),
+                        success: function () {
+                            loadingPanel.refresh();
+                            _this.trigger(EmployerFavouriteJobsWidgetEvents[EmployerFavouriteJobsWidgetEvents.FavouriteJobRemoved]);
+                        }
+                    });
+                });
+                loadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    Midas.Core.currentPage.initialise(loadingPanel.element);
+                });
+                this.addWidgetEventDependency(new Midas.Core.WidgetEventInfo("JobsWidget", Widgets.JobsWidgetEvents[Widgets.JobsWidgetEvents.FavouriteJobAdded], function (args) {
+                    loadingPanel.refresh();
+                }));
+                this.addWidgetEventDependency(new Midas.Core.WidgetEventInfo("JobsWidget", Widgets.JobsWidgetEvents[Widgets.JobsWidgetEvents.FavouriteJobRemoved], function (args) {
+                    loadingPanel.refresh();
+                }));
+            };
+            return EmployerFavouriteJobsWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.EmployerFavouriteJobsWidgetItem = EmployerFavouriteJobsWidgetItem;
+        (function (EmployerFavouriteJobsWidgetEvents) {
+            EmployerFavouriteJobsWidgetEvents[EmployerFavouriteJobsWidgetEvents["FavouriteJobRemoved"] = 0] = "FavouriteJobRemoved";
+            EmployerFavouriteJobsWidgetEvents[EmployerFavouriteJobsWidgetEvents["FavouriteJobAdded"] = 1] = "FavouriteJobAdded";
+        })(Widgets.EmployerFavouriteJobsWidgetEvents || (Widgets.EmployerFavouriteJobsWidgetEvents = {}));
+        var EmployerFavouriteJobsWidgetEvents = Widgets.EmployerFavouriteJobsWidgetEvents;
+        var EmployerFavouriteJobsWidgetItemInitialiser = (function () {
+            function EmployerFavouriteJobsWidgetItemInitialiser() {
+            }
+            EmployerFavouriteJobsWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new EmployerFavouriteJobsWidgetItem(widgetItemElement);
+            };
+            return EmployerFavouriteJobsWidgetItemInitialiser;
+        }());
+        Widgets.EmployerFavouriteJobsWidgetItemInitialiser = EmployerFavouriteJobsWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=JobTemplatesWidget.js.map
