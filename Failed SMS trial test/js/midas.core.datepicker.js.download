@@ -1,0 +1,153 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/bootstrap/bootstrap.d.ts" />
+/// <reference path="typings/jquery-validation-unobtrusive/jquery-validation-unobtrusive.d.ts" />
+/// <reference path="typings/jquery.validation/jquery.validation.d.ts" />
+/// <reference path="typings/datejs/datejs.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Datepicker = (function () {
+            function Datepicker() {
+                var _this = this;
+                this.initialise = function (container) {
+                    var methods = $.validator.methods;
+                    methods.date = function (value, element) {
+                        var format = $(this).data("date-format");
+                        if (!format)
+                            format = "dd/mm/yy";
+                        if (this.optional(element)) {
+                            return true;
+                        }
+                        try {
+                            $.datepicker.parseDate(format, value);
+                            return true;
+                        }
+                        catch (ex) {
+                            return false;
+                        }
+                    };
+                    $(container).find('input[data-datepicker="true"]').not("[disabled]").each(function (i, element) {
+                        try {
+                            var format = $(element).attr("data-datepicker-format");
+                            var dataDefaultDate = $(element).data("val-daterange-defaultdate");
+                            if (!format)
+                                format = "dd/mm/yy";
+                            var minDate = new Date();
+                            var maxDate = new Date();
+                            var dates = {
+                                minDate: minDate.setFullYear(1, 1, 1),
+                                maxDate: maxDate.setFullYear(9999, 12, 31)
+                            };
+                            if ($(element).data("valDaterange") && $(element).data("valDaterange").length) {
+                                dates = _this.GetMinMaxDate(element);
+                            }
+                            if (format.indexOf("d") != -1) {
+                                $(element).datepicker({
+                                    showOn: "focus",
+                                    showAnim: "show",
+                                    showButtonPanel: true,
+                                    changeMonth: true,
+                                    changeYear: true,
+                                    yearRange: "-140:+20",
+                                    dateFormat: format,
+                                    defaultDate: dataDefaultDate,
+                                    /* fix buggy IE focus functionality */
+                                    fixFocusIE: false,
+                                    beforeShow: function (input, inst) {
+                                        var result = Midas.Core.currentPage.datePicker.browserIsIE ? !this.fixFocusIE : true;
+                                        this.fixFocusIE = false;
+                                        return result;
+                                    },
+                                    onSelect: function (dateText, inst) {
+                                        this.fixFocusIE = true;
+                                        $(this).blur().change().focus();
+                                        $(element).valid();
+                                    },
+                                    onClose: function (dateText, inst) {
+                                        this.fixFocusIE = true;
+                                        $(element).focus();
+                                    },
+                                    minDate: dates.minDate,
+                                    maxDate: dates.maxDate
+                                });
+                                $(element).siblings(".input-group-addon").click(function () { $(element).focus(); });
+                                /* fix buggy IE focus functionality */
+                                $(element).blur(function () {
+                                    // Fixes issue where if the user tabs out and tabs back in
+                                    // the calendar popup would only show each second time.
+                                    this.fixFocusIE = false;
+                                });
+                            }
+                        }
+                        catch (ex) {
+                        }
+                    });
+                };
+                this.browserIsIE = function () {
+                    return ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') && (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent) != null)));
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            Datepicker.prototype.GetMinMaxDate = function (element) {
+                //     This section does offsets
+                //     Takes a starting date (default is Todays date), then adds offsets for the min and max date which creates the range
+                //     E.g: Between (Today-2weeks) and (Today)
+                var startingDate = null;
+                var comparisonProperty = $(element).data("valDaterangeComparisondateproperty");
+                if (comparisonProperty != null && comparisonProperty != "") {
+                    var dependentValue = $.coreValidate.getDependentValue(element, comparisonProperty);
+                    if (startingDate != null) {
+                        startingDate = Date.parse(dependentValue);
+                    }
+                }
+                if (startingDate == null) {
+                    startingDate = Date.today();
+                }
+                var minDaysOffset = parseInt($(element).data("valDaterangeMindaysoffset"));
+                var minMonthsOffset = parseInt($(element).data("valDaterangeMinmonthsoffset"));
+                var minYearsOffset = parseInt($(element).data("valDaterangeMinyearsoffset"));
+                var maxDaysOffset = parseInt($(element).data("valDaterangeMaxdaysoffset"));
+                var maxMonthsOffset = parseInt($(element).data("valDaterangeMaxmonthsoffset"));
+                var maxYearsOffset = parseInt($(element).data("valDaterangeMaxyearsoffset"));
+                var minDate = new Date(startingDate.toString());
+                var maxDate = new Date(startingDate.toString());
+                minDate.addDays(minDaysOffset).addMonths(minMonthsOffset).addYears(minYearsOffset).clearTime();
+                maxDate.addDays(maxDaysOffset).addMonths(maxMonthsOffset).addYears(maxYearsOffset).clearTime();
+                // This section uses dependant values and doesn't apply offsets
+                // We figure if you are defining a min and max value, you don't need offsets
+                var minDateDependentProperty = $(element).data("valDaterangeMindatedependentproperty");
+                var maxDateDependentProperty = $(element).data("valDaterangeMaxdatedependentproperty");
+                if (minDateDependentProperty != null && minDateDependentProperty != "" || maxDateDependentProperty != null && maxDateDependentProperty != "") {
+                    // Get minDate
+                    var minDateFromPropertyValue = $.coreValidate.getDependentValue(element, minDateDependentProperty);
+                    if (minDateFromPropertyValue != null) {
+                        minDate = Date.parse(minDateFromPropertyValue);
+                    }
+                    // Get maxDate
+                    var maxDateFromPropertyValue = $.coreValidate.getDependentValue(element, maxDateDependentProperty);
+                    if (maxDateFromPropertyValue != null) {
+                        maxDate = Date.parse(maxDateFromPropertyValue);
+                    }
+                    // If we get here, it means either a min date or max date was defined, so set anything that wasn't to todays date
+                    if (minDate || maxDate) {
+                        minDate = minDate || Date.today();
+                        maxDate = maxDate || Date.today();
+                        minDate.clearTime();
+                        maxDate.clearTime();
+                    }
+                }
+                var result = {
+                    minDate: minDate,
+                    maxDate: maxDate
+                };
+                return result;
+            };
+            return Datepicker;
+        }());
+        Core.Datepicker = Datepicker;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.datepicker.js.map

@@ -1,0 +1,23 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Loader = (function () {
+            function Loader() {
+            }
+            Loader.showLoader = function () {
+                $('.loader').addClass('transparent').fadeIn("slow");
+                $(".loader > .loader-img").fadeIn();
+            };
+            Loader.hideLoader = function () {
+                $(".loader > .loader-img").fadeOut();
+                $(".loader").delay(1000).fadeOut("slow");
+            };
+            return Loader;
+        }());
+        Core.Loader = Loader;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.loader.js.map

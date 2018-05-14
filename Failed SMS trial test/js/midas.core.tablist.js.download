@@ -1,0 +1,101 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var TabList = /** @class */ (function () {
+            function TabList(element) {
+                this.element = element;
+                this.initialiseProgress();
+                this.initialiseHandlers();
+            }
+            Object.defineProperty(TabList.prototype, "element", {
+                get: function () {
+                    return this._element;
+                },
+                set: function (element) {
+                    this._element = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TabList.prototype, "tabs", {
+                get: function () {
+                    return this.element.find('a[data-toggle="tab"]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TabList.prototype, "tabListItems", {
+                get: function () {
+                    return this.tabs.parent('li');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TabList.prototype, "activeTab", {
+                get: function () {
+                    var activeTab = this.element.find('li.active').find('a[data-toggle="tab"]');
+                    return this.tabs.filter(activeTab);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TabList.prototype, "activeTabListItem", {
+                get: function () {
+                    return this.tabListItems.filter('.active');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            TabList.prototype.initialiseProgress = function () {
+                if (this.element.is('.progress-tracker')) {
+                    this.tabs.on('shown.bs.tab', function (e) {
+                        $(e.target).closest('li').toggleClass('is-active', true);
+                        $(e.relatedTarget).closest('li').toggleClass('is-active', false);
+                    });
+                }
+            };
+            TabList.prototype.initialiseHandlers = function () {
+                var _this = this;
+                var prevButton = $('[data-tablist-prevbutton][data-targetid=' + this.element.attr('id') + ']');
+                prevButton.on('click', function (ce) {
+                    var target = $(ce.currentTarget);
+                    var prevTabListItemIndex = _this.tabs.index(_this.activeTab) - 1;
+                    var prevTab = $(_this.tabs[prevTabListItemIndex]);
+                    if (prevTab.length) {
+                        prevTab.tab('show');
+                    }
+                });
+                var nextButton = $('[data-tablist-nextbutton][data-targetid=' + this.element.attr('id') + ']');
+                nextButton.on('click', function (ce) {
+                    var target = $(ce.currentTarget);
+                    var nextTabListItemIndex = _this.tabs.index(_this.activeTab) + 1;
+                    var nextTab = $(_this.tabs[nextTabListItemIndex]);
+                    if (nextTab.length) {
+                        nextTab.tab('show');
+                    }
+                });
+            };
+            return TabList;
+        }());
+        Core.TabList = TabList;
+        var TabListInitialiser = /** @class */ (function () {
+            function TabListInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            TabListInitialiser.prototype.initialise = function (container) {
+                container.find('[role=tablist]').each(function (index, element) {
+                    var tabList = new Midas.Core.TabList($(element));
+                });
+            };
+            return TabListInitialiser;
+        }());
+        Core.TabListInitialiser = TabListInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.tablist.js.map

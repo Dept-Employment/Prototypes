@@ -1,0 +1,42 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="typings/jquery.pnotify/jquery.pnotify.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Notification = (function () {
+            function Notification() {
+                var _this = this;
+                this.stackbar = function (title, text, buttons) {
+                    return new PNotify({
+                        title_escape: false,
+                        title: title,
+                        text: text,
+                        stack: _this.stackbarBottomSettings,
+                        addclass: "stack-bar-bottom",
+                        cornerclass: "",
+                        width: "70%",
+                        delay: 800000,
+                        confirm: {
+                            confirm: true,
+                            align: "left",
+                            buttons: buttons,
+                        },
+                        buttons: {
+                            closer: false,
+                            sticker: false
+                        }
+                    });
+                };
+                PNotify.prototype.options.styling = "bootstrap3";
+                PNotify.prototype.options.styling = "fontawesome";
+                PNotify.prototype.options.confirm.buttons = [];
+                this.stackbarBottomSettings = { "dir1": "up", "dir2": "right", "spacing1": 0, "spacing2": 0 };
+            }
+            return Notification;
+        }());
+        Core.Notification = Notification;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.Notification.js.map

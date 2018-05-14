@@ -1,0 +1,210 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SearchBar = (function (_super) {
+            __extends(SearchBar, _super);
+            function SearchBar(element) {
+                _super.call(this, element, Core.ControlType.SearchBar, {
+                    targetControlId: null,
+                    sortIcon: "fa-sort",
+                    sortAscIcon: "fa-sort-asc",
+                    sortDescIcon: "fa-sort-desc",
+                    selectedIcon: "fa-check"
+                });
+            }
+            SearchBar.prototype.initialise = function () {
+                this.initialiseElement();
+                this.initialiseSearch();
+                this.initialiseSorting();
+                this.initialiseSelecting();
+                // Create the initial version of the search request data so that it is included
+                // in reads that occur before the first time the search button is clicked.
+                this.createSearchRequestData();
+            };
+            Object.defineProperty(SearchBar.prototype, "searchRequestData", {
+                get: function () {
+                    return this.searchRequestDataInternal;
+                },
+                set: function (value) {
+                    this.searchRequestDataInternal = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchBar.prototype, "targetControl", {
+                get: function () {
+                    return $('#' + this.settings.targetControlId).getDataBoundControl();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchBar.prototype, "form", {
+                get: function () {
+                    return this.element.find('form');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            SearchBar.prototype.initialiseElement = function () {
+                this.element.addClass("m-searchbar");
+            };
+            SearchBar.prototype.initialiseSearch = function () {
+                var _this = this;
+                if (this.settings.targetControlId != null) {
+                    var targetControl = $('#' + this.settings.targetControlId).getDataBoundControl();
+                    if (targetControl != null && targetControl.dataSource != null) {
+                        this.element.on("click" + SearchBar.nameSpace, "[data-searchbar-searchbutton]", $.proxy(function (e) {
+                            e.preventDefault();
+                            var form = _this.element.find('form');
+                            if (form.valid()) {
+                                // We create the search request data here but it is attached in the request starting event of the
+                                // data source so that it can be attached to the request data for all reads including when paging,
+                                // filtering or sorting the data bound control.
+                                _this.createSearchRequestData();
+                                _this.trigger(SearchBarEvents[SearchBarEvents.Search]);
+                                targetControl.dataSource.filter(null);
+                            }
+                        }, this));
+                        targetControl.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.RequestStarting], function (e) {
+                            if (e.data.type == Core.DataRequestType[Core.DataRequestType.Read] && _this.searchRequestData != null) {
+                                // We attach the search request data here rather than the click handler of the search button
+                                // so that the data is also attached when paging, filtering or sorting the data bound control.
+                                $.extend(true, e.data.data, _this.searchRequestData);
+                            }
+                        });
+                    }
+                }
+            };
+            SearchBar.prototype.createSearchRequestData = function () {
+                this.searchRequestData = this.form.serializeObject();
+            };
+            SearchBar.prototype.initialiseSorting = function () {
+                var _this = this;
+                this.element.find('[data-sort]').each(function (index, element) {
+                    var sortItem = $(element);
+                    var title = SearchBar.sortByText + sortItem.data('sort-fielddescription');
+                    sortItem.attr('title', title);
+                });
+                this.element.on("click" + SearchBar.nameSpace, "[data-sort]", $.proxy(function (e) {
+                    e.preventDefault();
+                    var sortItem = $(e.target);
+                    var sortField = sortItem.data('sort-field');
+                    var sortDirection = sortItem.data('sort-direction');
+                    var targetControl = $('#' + _this.settings.targetControlId).getDataBoundControl();
+                    if (targetControl != null && targetControl.dataSource != null) {
+                        targetControl.dataSource.sort({ field: sortField, dir: sortDirection });
+                    }
+                    // Change the selected sort item.
+                    _this.element.find('[data-sort]').each(function (index, element) {
+                        $(element).find('.' + _this.settings.selectedIcon).remove();
+                    });
+                    var selectedIcon = $('<span class="fa"></span>');
+                    selectedIcon.addClass(_this.settings.selectedIcon);
+                    sortItem.append(selectedIcon);
+                }, this));
+            };
+            SearchBar.prototype.initialiseSelecting = function () {
+                var _this = this;
+                this.element.find("[data-selectall]").click(function (ce) {
+                    ce.preventDefault();
+                    _this.targetControl.selectAllItems();
+                });
+                this.element.find("[data-deselectall]").click(function (ce) {
+                    ce.preventDefault();
+                    _this.targetControl.deselectAllItems();
+                });
+            };
+            SearchBar.prototype.getFilters = function (visibleOnly) {
+                var form = this.element.find('form');
+                var filters = new Array();
+                var inputs = form.find('input').not('input[type=button]').not('input[type=submit]');
+                if (visibleOnly) {
+                    inputs = inputs.filter(':visible');
+                }
+                inputs.each(function (index, element) {
+                    var input = $(element);
+                    if (input.is('[type=checkbox]')) {
+                        if (input.is(':checked')) {
+                            filters.push({
+                                name: input.attr('name'),
+                                value: input.val(),
+                                text: input.parent().text()
+                            });
+                        }
+                    }
+                    else if (input.val().trim() != "") {
+                        filters.push({
+                            name: input.attr('name'),
+                            value: input.val(),
+                            text: input.val()
+                        });
+                    }
+                });
+                var selects = form.find('select').filter(':visible');
+                selects.each(function (index, element) {
+                    var select = $(element);
+                    filters.push({
+                        name: select.attr('name'),
+                        value: select.val(),
+                        text: select.val()
+                    });
+                });
+                return filters;
+            };
+            SearchBar.prototype.removeFilter = function (filterName) {
+                var form = this.element.find('form');
+                var filterInput = form.find('input[name=' + filterName + ']');
+                if (filterInput.length) {
+                    if (filterInput.is('[type=checkbox]')) {
+                        filterInput.prop('checked', false);
+                    }
+                    else {
+                        filterInput.val('');
+                        filterInput.trigger('change');
+                    }
+                    this.createSearchRequestData();
+                }
+            };
+            SearchBar.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.element.off(SearchBar.nameSpace);
+            };
+            SearchBar.nameSpace = ".coreSearchBar";
+            SearchBar.ascendingSort = "asc";
+            SearchBar.ascendingDescription = "ascending";
+            SearchBar.descendingSort = "desc";
+            SearchBar.descendingDescription = "descending";
+            SearchBar.sortByText = "Sort by ";
+            return SearchBar;
+        }(Core.Control));
+        Core.SearchBar = SearchBar;
+        var SearchBarInitialiser = (function () {
+            function SearchBarInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-searchbar]').each(function (index, element) {
+                        var searchBarElement = $(element);
+                        var searchBar = new SearchBar(searchBarElement);
+                    });
+                };
+            }
+            return SearchBarInitialiser;
+        }());
+        Core.SearchBarInitialiser = SearchBarInitialiser;
+        (function (SearchBarEvents) {
+            SearchBarEvents[SearchBarEvents["Search"] = 0] = "Search";
+        })(Core.SearchBarEvents || (Core.SearchBarEvents = {}));
+        var SearchBarEvents = Core.SearchBarEvents;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.SearchBarInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.searchbar.js.map

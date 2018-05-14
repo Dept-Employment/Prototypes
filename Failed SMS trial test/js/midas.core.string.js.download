@@ -1,0 +1,10 @@
+if (typeof String.format !== 'function') {
+    String.format = function (format) {
+        var values = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            values[_i - 1] = arguments[_i];
+        }
+        return format.replace(/{(\d+)}/g, function (match, number) { return typeof values[number] != 'undefined' ? values[number] : match; });
+    };
+}
+//# sourceMappingURL=midas.core.string.js.map

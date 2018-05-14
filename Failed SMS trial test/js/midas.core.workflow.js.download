@@ -1,0 +1,395 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Workflow = /** @class */ (function (_super) {
+            __extends(Workflow, _super);
+            function Workflow(element) {
+                var _this = _super.call(this, element, Core.ControlType.Workflow, {}) || this;
+                _this.sendStepHitAnalytics = function (step) {
+                    if (typeof ga != "undefined") {
+                        ga('set', 'page', step.settings.loadAction.url);
+                        ga('send', 'pageview');
+                    }
+                };
+                _this.showStep = function (stepNumber) {
+                    if (_this.settingsObject.progressBar.enabled) {
+                        var step = _this.getStep(stepNumber);
+                        var stepNumberForDisplay;
+                        _this.progressBarStepElements.each(function (index, htmlElement) {
+                            var element = $(htmlElement);
+                            var elementStepNumber = element.data('workflow-progressbar-step');
+                            element.toggleClass('is-active', elementStepNumber === step.settings.progressStepNumber);
+                            element.toggleClass('is-complete', elementStepNumber < step.settings.progressStepNumber);
+                            if (elementStepNumber == step.settings.progressStepNumber) {
+                                stepNumberForDisplay = _this.progressBarStepElements.index(element) + 1;
+                            }
+                        });
+                        _this.progressBarCurrentStepTextElement.text("Step " + stepNumberForDisplay + " of " + _this.progressBarStepElements.length);
+                    }
+                };
+                return _this;
+            }
+            Workflow.prototype.initialise = function () {
+                Midas.Core.currentPage.form.disable();
+                this.initialiseSteps();
+                this.initialiseProgress();
+                this.initialiseHandlers();
+                if (this.settingsObject.workflowId != null) {
+                    window.history.replaceState(null, null, "?workflowId=" + this.settingsObject.workflowId);
+                }
+                this.goToStep(this.currentStepNumber);
+            };
+            Object.defineProperty(Workflow.prototype, "settingsObject", {
+                get: function () {
+                    return this.settings;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "steps", {
+                get: function () {
+                    return this._steps;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "currentStep", {
+                get: function () {
+                    return this.getStep(this.currentStepNumber);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "currentStepNumber", {
+                get: function () {
+                    return this.progress[this.progress.length - 1];
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "currentStepContentElement", {
+                get: function () {
+                    return this.element.find("[data-workflow-currentstepcontent]");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "prevButtonElement", {
+                get: function () {
+                    return this.currentStepContentElement.find('[data-workflow-prevbutton]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "nextButtonElement", {
+                get: function () {
+                    return this.currentStepContentElement.find('[data-workflow-nextbutton]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "cancelButtonElement", {
+                get: function () {
+                    return this.currentStepContentElement.find('[data-workflow-cancel]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "progress", {
+                get: function () {
+                    return this._progress;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "progressBarElement", {
+                get: function () {
+                    return this.element.find("[data-workflow-progressbar]");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "progressBarStepElements", {
+                get: function () {
+                    return this.progressBarElement.find("[data-workflow-progressbar-step]");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Workflow.prototype, "progressBarCurrentStepTextElement", {
+                get: function () {
+                    return this.progressBarElement.find(".progress-currentsteptext");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Workflow.prototype.initialiseSteps = function () {
+                var _this = this;
+                this._steps = new Array();
+                $.each(this.settingsObject.steps, function (index, stepData) {
+                    _this.initialiseStep(stepData);
+                });
+            };
+            Workflow.prototype.initialiseStep = function (stepSettings) {
+                var step;
+                try {
+                    if (this.settingsObject.classNamespace != null && stepSettings.className != null && Midas.Business[this.settingsObject.classNamespace][stepSettings.className] != null) {
+                        step = new Midas.Business[this.settingsObject.classNamespace][stepSettings.className]();
+                    }
+                    else {
+                        step = new Midas.Core.WorkflowStep();
+                    }
+                }
+                catch (Exception) {
+                    step = new Midas.Core.WorkflowStep();
+                }
+                step.settings = stepSettings;
+                if (step.settings.progressStepNumber == null) {
+                    step.settings.progressStepNumber = step.settings.stepNumber;
+                }
+                this.steps.push(step);
+            };
+            Workflow.prototype.initialiseProgress = function () {
+                if (this.settingsObject.completedStepNumbers != null && this.settingsObject.completedStepNumbers.length > 0) {
+                    this._progress = this.settingsObject.completedStepNumbers;
+                }
+                else {
+                    this._progress = new Array();
+                }
+                this._progress.push(this.settingsObject.initialStepNumber);
+            };
+            Workflow.prototype.initialiseHandlers = function () {
+                var _this = this;
+                this.element.on("submit", "form", function (e) {
+                    e.preventDefault();
+                    return false;
+                });
+                this.element.on("click", "[data-workflow-nextbutton]", function (e) {
+                    _this.goToNextStep(e);
+                });
+                this.element.on("click", "[data-workflow-prevbutton]", function (e) {
+                    _this.goToPrevStep(e);
+                });
+                this.element.on("click", "[data-workflow-cancel]", function (e) {
+                    e.preventDefault();
+                    var currentTarget = $(e.currentTarget);
+                    window.location.href = currentTarget.attr('href');
+                });
+                if (this.settingsObject.progressBar.navigationEnabled) {
+                    this.element.on("click", "[data-workflow-progressbar-step]", function (e) {
+                        e.preventDefault();
+                        var currentTarget = $(e.currentTarget);
+                        _this.goToProgressBarStep(currentTarget.data("workflow-progressbar-step"));
+                    });
+                    // Initialise unsaved changes confirmation modals on progress bar steps.
+                    this.progressBarStepElements.each(function (index, stepElement) {
+                        var stepAnchor = $(stepElement).find('a');
+                        stepAnchor.attr('data-confirm', 'You have unsaved changes. Are you sure you want to continue?');
+                        stepAnchor.attr('data-confirm-title', 'Unsaved changes');
+                        stepAnchor.attr('data-confirm-disabled', true.toString());
+                    });
+                    Midas.Core.currentPage.initialiseConfirmationModal(this.progressBarElement);
+                }
+                else {
+                    this.element.on("click", "[data-workflow-progressbar-step]", function (e) {
+                        e.preventDefault();
+                    });
+                }
+            };
+            Workflow.prototype.goToStep = function (stepNumber) {
+                if (this.currentStepNumber != stepNumber) {
+                    this.progress.push(stepNumber);
+                }
+                this.loadStep(stepNumber);
+            };
+            Workflow.prototype.goToProgressBarStep = function (stepNumber) {
+                if (this.currentStepNumber > stepNumber) {
+                    while (this.currentStepNumber > stepNumber) {
+                        this.progress.pop();
+                    }
+                }
+                else if (this.currentStepNumber < stepNumber) {
+                    while (this.currentStepNumber < stepNumber) {
+                        var nextStepIndex = this.steps.indexOf(this.currentStep) + 1;
+                        var nextStepNumber = this.steps[nextStepIndex].settings.stepNumber;
+                        this.progress.push(nextStepNumber);
+                    }
+                }
+                this.loadStep(stepNumber);
+            };
+            Workflow.prototype.goToNextStep = function (e) {
+                var _this = this;
+                var currentStep = this.currentStep;
+                var element = e.currentTarget;
+                var form = $(element.form);
+                if (form.length == 0 || form.valid()) {
+                    var data = form.serializeArray();
+                    data.push({
+                        name: "workflowId",
+                        value: this.settingsObject.workflowId
+                    });
+                    $.ajax({
+                        url: currentStep.settings.submitAction.url,
+                        type: "POST",
+                        data: data,
+                        global: true,
+                        success: function (result, textStatus, xhr) {
+                            var contentType = xhr.getResponseHeader("Content-Type");
+                            if (xhr.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+                                // assume that the response is a redirection and reload the screen.
+                                window.location.reload();
+                            }
+                            else {
+                                Midas.Core.currentPage.sessionTimer.reset();
+                                var response = result;
+                                if (Midas.Core.AjaxValidation.processAjaxResult(result, form[0])) {
+                                    if (_this.settingsObject.workflowId != null) {
+                                        if (!response.IsPrereqStepsComplete) {
+                                            window.location.reload();
+                                            return;
+                                        }
+                                    }
+                                    if ($(element).is("[data-workflow-saveandexit]")) {
+                                        window.location.href = _this.settingsObject.saveAndExitAction.url;
+                                    }
+                                    else {
+                                        currentStep.submitSuccess(result, response);
+                                        var lastStep = _this.steps[_this.steps.length - 1];
+                                        if (_this.currentStep == lastStep) {
+                                            window.location.href = _this.settingsObject.completedAction.url;
+                                        }
+                                        else {
+                                            var nextStepIndex = _this.steps.indexOf(_this.currentStep) + 1;
+                                            var nextStepNumber = _this.steps[nextStepIndex].settings.stepNumber;
+                                            if (response.NextStep != null) {
+                                                nextStepNumber = response.NextStep;
+                                            }
+                                            if (nextStepNumber > _this.currentStepNumber) {
+                                                _this.goToStep(nextStepNumber);
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    currentStep.submitError(result, response);
+                                }
+                            }
+                        },
+                        error: function (request, textStatus, errorThrown) {
+                            Midas.Core.currentPage.showGenericErrorModal();
+                        }
+                    });
+                }
+            };
+            Workflow.prototype.goToPrevStep = function (e) {
+                this.progress.pop();
+                this.loadStep(this.currentStepNumber);
+            };
+            Workflow.prototype.getStep = function (stepNumber) {
+                return this.steps.filter(function (step) { return step.settings.stepNumber == stepNumber; })[0];
+            };
+            Workflow.prototype.loadStep = function (stepNumber) {
+                var _this = this;
+                var step = this.getStep(stepNumber);
+                var url = step.settings.loadAction.url;
+                if (url != null && url != '') {
+                    var data = {
+                        WorkflowId: this.settingsObject.workflowId
+                    };
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        data: data,
+                        global: true,
+                        success: function (result, textStatus, xhr) {
+                            var response = result;
+                            if (_this.settingsObject.workflowId != null) {
+                                if (response.Status == 4 || !response.IsPrereqStepsComplete) {
+                                    window.location.reload();
+                                    return;
+                                }
+                            }
+                            _this.currentStepContentElement.fadeOut("slow", function () {
+                                if (response != null && response.ViewHtml != null) {
+                                    _this.currentStepContentElement.html(response.ViewHtml);
+                                }
+                                else {
+                                    _this.currentStepContentElement.html(result);
+                                }
+                                Midas.Core.currentPage.initialise(_this.currentStepContentElement);
+                                Midas.Core.currentPage.sessionTimer.reset();
+                                var form = _this.currentStepContentElement.find('form');
+                                if (form.length > 0) {
+                                    $.validator.unobtrusive.parse(form);
+                                    AJSValidate.InitialiseDependentValidations(form);
+                                    // Initialise unsaved changes confirmation modals on previous and cancel buttons.
+                                    _this.currentStepContentElement.find('[data-workflow-prevbutton],[data-workflow-cancel]').each(function (index, buttonElement) {
+                                        var button = $(buttonElement);
+                                        button.attr('data-confirm', 'You have unsaved changes. Are you sure you want to continue?');
+                                        button.attr('data-confirm-title', 'Unsaved changes');
+                                        button.attr('data-confirm-disabled', true.toString());
+                                    });
+                                    Midas.Core.currentPage.initialiseConfirmationModal(_this.currentStepContentElement);
+                                }
+                                if (_this.settingsObject.progressBar.navigationEnabled) {
+                                    // Reset unsaved changes confirmation modals on progress bar steps.
+                                    _this.progressBarStepElements.each(function (index, progressBarStepElement) {
+                                        var progressBarStepAnchor = $(progressBarStepElement).find('a');
+                                        progressBarStepAnchor.attr('data-confirm-disabled', true.toString());
+                                    });
+                                }
+                                step.loadCompleted();
+                                if (form.length > 0) {
+                                    // Enable the unsaved changes confirmation modals on previous and cancel buttons when a form field
+                                    // changes. This must be done after the loadCompleted event so that any changes made to form fields
+                                    // during that event do not cause the unsaved changes confirmation modals to be enabled.
+                                    form.find('input:not([type=hidden]), textarea, select').not('.hidden').on('change', function (e) {
+                                        _this.prevButtonElement.attr('data-confirm-disabled', false.toString());
+                                        _this.cancelButtonElement.attr('data-confirm-disabled', false.toString());
+                                        _this.progressBarStepElements.find('a').attr('data-confirm-disabled', false.toString());
+                                    });
+                                }
+                                _this.sendStepHitAnalytics(step);
+                                _this.showStep(stepNumber);
+                                _this.currentStepContentElement.fadeIn("slow");
+                            });
+                        },
+                        error: function (request, textStatus, errorThrown) {
+                            Midas.Core.currentPage.showGenericErrorModal();
+                        }
+                    });
+                }
+            };
+            return Workflow;
+        }(Core.Control));
+        Core.Workflow = Workflow;
+        var WorkflowInitialiser = /** @class */ (function () {
+            function WorkflowInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-workflow]').each(function (index, element) {
+                        var widgetContainer = new Workflow($(element));
+                    });
+                };
+            }
+            return WorkflowInitialiser;
+        }());
+        Core.WorkflowInitialiser = WorkflowInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.WorkflowInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.workflow.js.map

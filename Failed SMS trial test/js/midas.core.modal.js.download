@@ -1,0 +1,93 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Modal = (function (_super) {
+            __extends(Modal, _super);
+            function Modal(element) {
+                _super.call(this, element, Core.ControlType.Modal, {});
+            }
+            Modal.prototype.initialise = function () {
+                var _this = this;
+                if (this.form.length) {
+                    var jQuery = $;
+                    jQuery.validator.unobtrusive.parse(this.form);
+                    AJSValidate.InitialiseDependentValidations(this.form);
+                }
+                this.ajaxSubmitButton.click(function (ce) {
+                    if (_this.form.length) {
+                        if (!_this.form.valid()) {
+                            ce.stopImmediatePropagation();
+                        }
+                    }
+                });
+                this.element.on('shown.bs.modal', function () {
+                    // Replace the bootstrap modal focusin handler so that the modal element
+                    // never gets focus when tabbing or reverse tabbing through the modal.
+                    $(document).off('focusin.bs.modal');
+                    var focusable = _this.element.find(":focusable");
+                    if (focusable.length) {
+                        focusable.first().off('focusout.m.modal');
+                        focusable.first().on('focusout.m.modal', $.proxy(function (e) {
+                            if (!this.element.has(e.relatedTarget).length) {
+                                focusable.last().focus();
+                            }
+                        }, _this));
+                        focusable.last().off('focusout.m.modal');
+                        focusable.last().on('focusout.m.modal', $.proxy(function (e) {
+                            if (!this.element.has(e.relatedTarget).length) {
+                                focusable.first().focus();
+                            }
+                        }, _this));
+                    }
+                });
+                this.element.on('hide.bs.modal', function () {
+                    var focusable = _this.element.find(":focusable");
+                    if (focusable.length) {
+                        focusable.first().off('focusout.m.modal');
+                        focusable.last().off('focusout.m.modal');
+                    }
+                });
+            };
+            Object.defineProperty(Modal.prototype, "form", {
+                get: function () {
+                    return this.element.find('form');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Modal.prototype, "ajaxSubmitButton", {
+                get: function () {
+                    return this.element.find("[data-modal-ajaxsubmit]");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return Modal;
+        }(Core.Control));
+        Core.Modal = Modal;
+        var ModalInitialiser = (function () {
+            function ModalInitialiser() {
+                var _this = this;
+                this.initialise = function (container) {
+                    container.find('.modal').each(function (index, element) {
+                        var modal = new Modal($(element));
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return ModalInitialiser;
+        }());
+        Core.ModalInitialiser = ModalInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.modal.js.map

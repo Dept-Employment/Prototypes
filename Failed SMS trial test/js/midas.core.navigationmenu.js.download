@@ -1,0 +1,82 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var NavigationMenu = (function () {
+            function NavigationMenu() {
+                var _this = this;
+                this.ready = function () {
+                    _this.navbar = $('nav.navbar');
+                    _this.navbarSecureMenu = $('.secure-menu');
+                    _this.navbarHeight = _this.navbar.outerHeight();
+                    if (_this.navbarSecureMenu.length > 0) {
+                        _this.navbarHeight += _this.navbarSecureMenu.outerHeight();
+                    }
+                    $(window).scroll(_this.onScroll);
+                    _this.lastScrollPosition = $(document).scrollTop();
+                    _this.getInboxCount();
+                };
+                this.onScroll = function (event) {
+                    var currentScrollPosition = $(document).scrollTop();
+                    // Make sure they scroll more than delta
+                    if (Math.abs(_this.lastScrollPosition - currentScrollPosition) <= _this.delta)
+                        return;
+                    // If they scrolled down and are past the navbar, add class .nav-up.
+                    // This is necessary so you never see what is "behind" the navbar.
+                    if (currentScrollPosition > _this.lastScrollPosition && currentScrollPosition > _this.navbarHeight) {
+                        // Scroll Down
+                        _this.navbar.removeClass('nav-down').addClass('nav-up');
+                    }
+                    else {
+                        // Scroll Up
+                        if (currentScrollPosition + $(window).height() <= $(document).height()) {
+                            _this.navbar.removeClass('nav-up').addClass('nav-down');
+                        }
+                    }
+                    _this.lastScrollPosition = currentScrollPosition;
+                };
+                this.getInboxCount = function () {
+                    var endpoint = "";
+                    if (Midas.Core.currentPage.settings.isJobseeker()) {
+                        endpoint = "/Jobseekers/mydashboard/GetUnreadInboxMessageCount";
+                    }
+                    else if (Midas.Core.currentPage.settings.isEmployer()) {
+                        endpoint = "/Employers/Inbox/GetUnreadInboxMessageCount";
+                    }
+                    if (endpoint != "") {
+                        $.get(endpoint, "", function (data) {
+                            var count;
+                            count = data ? data : 0;
+                            if (count > 0) {
+                                $(".inbox-icon.m-badge").attr("data-badge-count", count);
+                            }
+                            else {
+                                $(".inbox-icon.m-badge").removeClass("m-badge");
+                            }
+                        });
+                    }
+                };
+                this.delta = 5;
+            }
+            Object.defineProperty(NavigationMenu.prototype, "height", {
+                get: function () {
+                    return this.navbarHeight;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(NavigationMenu.prototype, "isVisible", {
+                get: function () {
+                    return this.navbar.hasClass('nav-down');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return NavigationMenu;
+        }());
+        Core.NavigationMenu = NavigationMenu;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.NavigationMenu.js.map

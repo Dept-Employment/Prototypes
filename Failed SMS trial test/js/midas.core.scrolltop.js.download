@@ -1,0 +1,36 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ScrollTop = (function () {
+            function ScrollTop() {
+                var _this = this;
+                this.ready = function () {
+                    _this.window = $(window);
+                    _this.fab = $('.scroll-top');
+                    _this.htmlbody = $('html, body');
+                    _this.window.scroll(function () {
+                        if (_this.window.scrollTop() > _this.pxScrolled) {
+                            $('.scroll-top-container').css({ 'bottom': '0px', 'transition': '.3s' });
+                        }
+                        else {
+                            $('.scroll-top-container').css({ 'bottom': '-72px' });
+                        }
+                    });
+                    _this.fab.click(function (event) {
+                        event.preventDefault();
+                        _this.htmlbody.animate({ scrollTop: 0 }, _this.duration);
+                        return false;
+                    });
+                };
+                this.pxScrolled = 200;
+                this.duration = 200;
+            }
+            return ScrollTop;
+        }());
+        Core.ScrollTop = ScrollTop;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.ScrollTop.js.map

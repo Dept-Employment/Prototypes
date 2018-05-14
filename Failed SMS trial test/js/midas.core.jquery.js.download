@@ -1,0 +1,30 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        $.extend({
+            union: function (array1, array2, callback) {
+                var hash = {}, union = [];
+                $.each($.merge($.merge([], array1), array2), function (index, value) {
+                    hash[callback(value)] = value;
+                });
+                $.each(hash, function (key, value) {
+                    union.push(value);
+                });
+                return union;
+            }
+        });
+        $.extend({
+            getQueryParameterByName: function (name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)", "i"), results = regex.exec(location.search);
+                return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+        });
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+(function () {
+});
+//# sourceMappingURL=midas.core.jquery.js.map

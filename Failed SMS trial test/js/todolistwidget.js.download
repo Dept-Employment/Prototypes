@@ -1,0 +1,74 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        (function (TodoListItem) {
+            TodoListItem[TodoListItem["OnShowOpenItem"] = 0] = "OnShowOpenItem";
+        })(Widgets.TodoListItem || (Widgets.TodoListItem = {}));
+        var TodoListItem = Widgets.TodoListItem;
+        var ToDoListWidgetItem = (function (_super) {
+            __extends(ToDoListWidgetItem, _super);
+            function ToDoListWidgetItem() {
+                var _this = this;
+                _super.apply(this, arguments);
+                this.position = 1;
+                this.modelIdPrefix = "#todoListItemModal";
+                this.selectedDate = "";
+                this.tabKeyCode = 9;
+                this.enterKeyCode = 13;
+                this.CurrentCard = function () {
+                    var currentCardId = _this.modelIdPrefix + _this.position;
+                    return $(currentCardId);
+                };
+                //CurrentCardDate = (): string => {
+                //    return this.CurrentCard().find('.badge').text();
+                //}
+                this.OpenCard = function (ce) {
+                    var todoItem = $(ce.currentTarget);
+                    if (todoItem.hasClass('disableClick')) {
+                        todoItem.removeClass('disableClick');
+                    }
+                    else {
+                        var dataVal = todoItem.data('event');
+                        _this.position = dataVal;
+                        var id = _this.modelIdPrefix + dataVal;
+                        $(id).modal();
+                    }
+                    _this.trigger(TodoListItem[TodoListItem.OnShowOpenItem], { Response: todoItem });
+                };
+            }
+            ToDoListWidgetItem.prototype.initialise = function () {
+                var _this = this;
+                _super.prototype.initialise.call(this);
+                var toDoListLoadingElement = this.element.find('#ToDoListLoadingPanel');
+                var toDoListLoadingPanel = toDoListLoadingElement.getAjaxLoadingPanel();
+                toDoListLoadingPanel.element.on('click', '.todoItem', function (e) {
+                    _this.OpenCard(e);
+                });
+                toDoListLoadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    new Midas.Core.GoogleAnalyticsTracker().elementReady(toDoListLoadingElement);
+                });
+            };
+            ToDoListWidgetItem.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+            };
+            return ToDoListWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.ToDoListWidgetItem = ToDoListWidgetItem;
+        var ToDoListWidgetItemInitialiser = (function () {
+            function ToDoListWidgetItemInitialiser() {
+            }
+            ToDoListWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new ToDoListWidgetItem(widgetItemElement);
+            };
+            return ToDoListWidgetItemInitialiser;
+        }());
+        Widgets.ToDoListWidgetItemInitialiser = ToDoListWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=ToDoListWidget.js.map

@@ -1,0 +1,107 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Login = (function () {
+            function Login() {
+                var _this = this;
+                this.ready = function () {
+                    _this.loginContainerCloseButton = $(".login-container .close-container button.close");
+                    _this.loginContainerCloseButton.on("click", _this.closeLoginModal);
+                    _this.iframeContainer = $(".login-container .iframe-container");
+                    _this.loaderContainer = $(".login-container .loader-container");
+                    _this.employerLoginTargets = $(".requires-login-employer");
+                    _this.jobseekerLoginTargets = $(".requires-login-jobseeker");
+                    _this.loginFader = $(".login-fader");
+                    _this.employerLoginTargets.on("click", _this.initiateEmployerLogin);
+                    _this.jobseekerLoginTargets.on("click", _this.initiateJobseekerLogin);
+                    window.addEventListener("message", _this.windowOnMessageEvent, false);
+                };
+                this.initiateEmployerLogin = function (e) {
+                    if (e != null) {
+                        e.preventDefault();
+                        _this.loginTargetUrl = $(e.currentTarget).attr("href");
+                    }
+                    if (_this.loginFrame == null) {
+                        _this.iframeContainer.hide();
+                        _this.iframeContainer.append($('<iframe id="login-frame" src="' + Midas.Core.currentPage.settings.employerLogin + '"></iframe>'));
+                        _this.loginFrame = $('#login-frame');
+                        _this.loginFrame.on("load", _this.loginFrameOnload);
+                    }
+                    _this.toggleLoginModal(".login-container.employer");
+                };
+                this.initiateJobseekerLogin = function (e) {
+                    if (e != null) {
+                        e.preventDefault();
+                        _this.loginTargetUrl = $(e.currentTarget).attr("href");
+                        console.warn("loginTarget Url1", _this.loginTargetUrl);
+                    }
+                    $("#mygov-login-container").modal({ show: true });
+                    //this.toggleLoginModal(".login-container.jobseeker");
+                };
+                this.loginFrameOnload = function (event) {
+                    _this.loginFrame[0].contentWindow.postMessage("jobsearch-website", "*");
+                    if (_this.iframeOnLoadCallback != null) {
+                        _this.iframeOnLoadCallback(_this.loginFrame[0]);
+                    }
+                };
+                this.windowOnMessageEvent = function (event) {
+                    if (event.data == "sts-ready") {
+                        $(".loader-sts").hide();
+                        _this.iframeContainer.show();
+                        _this.loaderContainer.hide();
+                    }
+                    else if (event.data == "inactive-employer") {
+                        _this.iframeContainer.hide();
+                        window.location.href = Midas.Core.currentPage.settings.baseUrl + "Account/InactiveEmployer";
+                    }
+                    else if (event.data == "logging-in") {
+                        _this.iframeContainer.hide();
+                        _this.loaderContainer.show();
+                        _this.loggingIn = true;
+                        setTimeout(function () {
+                            if (_this.loggingIn) {
+                                _this.loginComplete();
+                            }
+                        }, 30000);
+                    }
+                    else if (event.data == "login-success") {
+                        _this.loggingIn = false;
+                        _this.loginComplete();
+                    }
+                };
+                this.loginComplete = function () {
+                    _this.loaderContainer.children('.cog-spinner').hide();
+                    var textDiv = _this.loaderContainer.children("div");
+                    if (_this.loginCallback != null) {
+                        if (!_this.loggingIn) {
+                            textDiv.html('Sign in successful.');
+                        }
+                        _this.loginCallback();
+                    }
+                    else {
+                        if (!_this.loggingIn) {
+                            textDiv.html('Sign in successful. <br /> Redirecting to secure area now.');
+                        }
+                        window.location.href = _this.loginTargetUrl;
+                    }
+                };
+                this.toggleLoginModal = function (target) {
+                    _this.loginFader.fadeToggle(500);
+                    _this.loginContainer = $(target);
+                    _this.loginContainer.toggleClass('active');
+                };
+                this.closeLoginModal = function () {
+                    _this.loginFader.fadeToggle(500);
+                    $(".login-container").removeClass("active");
+                };
+                this.loginTargetUrl = "";
+            }
+            return Login;
+        }());
+        Core.Login = Login;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.Login.js.map

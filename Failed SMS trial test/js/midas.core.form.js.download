@@ -1,0 +1,42 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Form = (function () {
+            function Form() {
+                var _this = this;
+                this.enabled = true;
+                this.ready = function () {
+                    _this.initialise($(document));
+                    _this.isReady = true;
+                };
+                this.enable = function () {
+                    _this.enabled = true;
+                };
+                this.disable = function () {
+                    _this.enabled = false;
+                    if (_this.isReady) {
+                        $(document).find('form').off("submit.loader");
+                    }
+                };
+                this.initialise = function (container) {
+                    if (_this.enabled) {
+                        container.find("form").on("submit.loader", function (event) {
+                            if ($(event.currentTarget).valid()) {
+                                Midas.Core.Loader.showLoader();
+                            }
+                        }).delay(60000).queue(function (next) {
+                            Midas.Core.Loader.hideLoader();
+                            next();
+                        });
+                    }
+                };
+            }
+            return Form;
+        }());
+        Core.Form = Form;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.form.js.map

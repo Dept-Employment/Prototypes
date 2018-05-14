@@ -1,0 +1,33 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var WorkflowStep = /** @class */ (function () {
+            function WorkflowStep() {
+            }
+            Object.defineProperty(WorkflowStep.prototype, "settings", {
+                get: function () {
+                    return this._settings;
+                },
+                set: function (settings) {
+                    this._settings = settings;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            WorkflowStep.prototype.ready = function () {
+            };
+            WorkflowStep.prototype.loadCompleted = function () {
+            };
+            WorkflowStep.prototype.submitSuccess = function (rawResult, response) {
+            };
+            WorkflowStep.prototype.submitError = function (rawResult, response) {
+            };
+            return WorkflowStep;
+        }());
+        Core.WorkflowStep = WorkflowStep;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.workflowstep.js.map

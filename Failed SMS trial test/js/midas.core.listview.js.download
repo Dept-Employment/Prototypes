@@ -1,0 +1,388 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        (function (EditingEvents) {
+            EditingEvents[EditingEvents["Edit"] = 0] = "Edit";
+            EditingEvents[EditingEvents["Saving"] = 1] = "Saving";
+            EditingEvents[EditingEvents["Saved"] = 2] = "Saved";
+            EditingEvents[EditingEvents["Removing"] = 3] = "Removing";
+            EditingEvents[EditingEvents["Removed"] = 4] = "Removed";
+            EditingEvents[EditingEvents["Cancelling"] = 5] = "Cancelling";
+            EditingEvents[EditingEvents["Cancelled"] = 6] = "Cancelled";
+        })(Core.EditingEvents || (Core.EditingEvents = {}));
+        var EditingEvents = Core.EditingEvents;
+        var ListView = (function (_super) {
+            __extends(ListView, _super);
+            function ListView(element, settings) {
+                var _this = this;
+                _super.call(this, element, Core.ControlType.ListView, $.extend(true, {}, settings, { autoBind: true }));
+                this.unbindDataSource = function () {
+                    _this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.Change], _this.refreshHandler);
+                    _this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.Error], _this.errorHandler);
+                    _this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.RequestEnded], _this.requestEndedHandler);
+                };
+            }
+            ListView.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                this.settings.read = this.settings.dataSource.transport.read;
+                this.settings.create = this.settings.dataSource.transport.create;
+                this.settings.update = this.settings.dataSource.transport.update;
+                this.settings.destroy = this.settings.dataSource.transport.destroy;
+                this.initialiseElement();
+                this.initialiseDataSource();
+                this.initialisePaging();
+                this.initialiseCrudHandlers();
+                if (this.settings.autoBind) {
+                    this.dataSource.read();
+                }
+            };
+            Object.defineProperty(ListView, "editItemClass", {
+                get: function () { return "m-edititem"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ListView.prototype, "headerElement", {
+                get: function () {
+                    var headerElement = this.element.find('.m-listview-header').first();
+                    if (headerElement.length) {
+                        return headerElement;
+                    }
+                    else {
+                        return null;
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ListView.prototype, "items", {
+                get: function () {
+                    return this.element.children('[data-item]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ListView.prototype, "emptyView", {
+                get: function () {
+                    return this.element.children('[data-emptyview]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ListView.prototype, "pager", {
+                get: function () {
+                    return this.pagerField;
+                },
+                set: function (pager) {
+                    this.pagerField = pager;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            ListView.prototype.initialiseElement = function () {
+                // The data-role attribute value must be the same as the name of the control so that out
+                // of box roles based functionality like the widgetInstance method will work.
+                this.element.addClass("m-listview").attr('data-role', this.settings.controlName.toLowerCase()).attr("role", "listbox");
+            };
+            ListView.prototype.initialiseDataSource = function () {
+                if (this.dataSource && this.refreshHandler) {
+                    this.unbindDataSource();
+                }
+                else {
+                    this.refreshHandler = $.proxy(this.refresh, this);
+                    this.errorHandler = $.proxy(this.handleError, this);
+                    this.requestEndedHandler = $.proxy(this.requestEnded, this);
+                }
+                this.dataSource = Core.TemplateDataSource.create(this.settings.dataSource);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.Change], this.refreshHandler);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.Error], this.errorHandler);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.RequestEnded], this.requestEndedHandler);
+            };
+            ListView.prototype.handleError = function () {
+            };
+            ListView.prototype.requestEnded = function (e) {
+                if (e.data.type == Core.DataRequestType[Core.DataRequestType.Create] || e.data.type == Core.DataRequestType[Core.DataRequestType.Update]) {
+                    var form = this.editable.element.find('[data-editform]');
+                    var success = Core.AjaxValidation.processAjaxResult(e.data.response, form[0]);
+                    if (success) {
+                        this.dataSource.read();
+                    }
+                    this.trigger(EditingEvents[EditingEvents.Saved], { Response: e.data.response });
+                }
+                else if (e.data.type == Core.DataRequestType[Core.DataRequestType.Delete]) {
+                    this.trigger(EditingEvents[EditingEvents.Removed], { Response: e.data.response });
+                }
+            };
+            ListView.prototype.initialisePaging = function () {
+                var paging = this.settings.paging, settings, pagerId;
+                if ($.isPlainObject(paging)) {
+                    pagerId = paging.pagerId;
+                    settings = $.extend({}, paging, {
+                        dataSource: this.dataSource,
+                        pagerId: null
+                    });
+                    this.pager = new Core.Pager($("#" + pagerId), settings);
+                    this.pager.element.addClass('m-pager-wrap');
+                    this.element.addClass('m-listview-paging');
+                }
+            };
+            ListView.prototype.dataItem = function (element) {
+                var attr = "data-uid";
+                var uid = $(element).closest("[" + attr + "]").attr(attr);
+                return this.dataSource.getByUniqueId(uid);
+            };
+            ListView.prototype.refresh = function (e) {
+                var idx, length;
+                e = e || new Core.EventArgs({}, {});
+                if (e.data.action === "itemchange") {
+                    return;
+                }
+                if (this.trigger(Core.DataEvents[Core.DataEvents.DataBinding], { action: e.data.action || "rebind", items: e.data.items, index: e.data.index })) {
+                    return;
+                }
+                this.destroyEditable();
+                var view = this.dataSource.view();
+                var html = "";
+                for (idx = 0, length = view.length; idx < length; idx++) {
+                    var viewItem = view[idx];
+                    if (viewItem.Html) {
+                        var itemElement = $(viewItem.Html);
+                        itemElement.attr('data-item', true.toString());
+                        if (this.settings.itemCssClasses != null) {
+                            itemElement.addClass(this.settings.itemCssClasses);
+                        }
+                        else {
+                            itemElement.addClass('m-listview-item');
+                        }
+                        if (idx == 0) {
+                            itemElement.addClass('m-listview-firstitem');
+                        }
+                        if (idx % 2) {
+                            if (this.settings.altItemCssClasses != null) {
+                                itemElement.addClass(this.settings.altItemCssClasses);
+                            }
+                            else {
+                                itemElement.addClass('m-listview-altitem');
+                            }
+                        }
+                        if (idx == (length - 1)) {
+                            itemElement.addClass('m-listview-lastitem');
+                        }
+                        html += itemElement[0].outerHTML;
+                    }
+                }
+                if (this.pager != null) {
+                    this.pager.element.toggleClass("m-hidden", false);
+                }
+                if (!view.length && this.settings.emptyView != null) {
+                    html += this.settings.emptyView;
+                    if (this.pager != null) {
+                        this.pager.element.toggleClass("m-hidden", true);
+                    }
+                }
+                this.items.remove();
+                this.emptyView.remove();
+                if (this.headerElement != null) {
+                    this.element.append(html);
+                }
+                else {
+                    this.element.html(html);
+                }
+                for (idx = 0, length = view.length; idx < length; idx++) {
+                    this.items.eq(idx).attr("data-uid", view[idx].uniqueId)
+                        .attr("role", "option")
+                        .attr("aria-selected", "false");
+                }
+                this.trigger(Core.DataEvents[Core.DataEvents.DataBound]);
+            };
+            Object.defineProperty(ListView.prototype, "editable", {
+                get: function () {
+                    return this.editableField;
+                },
+                set: function (editable) {
+                    this.editableField = editable;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            ListView.prototype.edit = function (item) {
+                this.cancel();
+                var data = this.modelFromElement(item);
+                item = this.items.filter("[" + "data-uid" + "=" + data.uniqueId + "]");
+                var index = item.index();
+                item.html(data.EditHtml);
+                var container = this.items.eq(index).addClass(ListView.editItemClass).attr("data-uid", data.uniqueId);
+                this.editable = { element: container };
+                var form = item.find('[data-editform]');
+                $.validator.unobtrusive.parse(form);
+                this.trigger(EditingEvents[EditingEvents.Edit], { model: data, item: container });
+                // Focus the first tabbable element. We do this after firing the edit
+                // event so that controls can be initialised before we try to tab them.
+                item.find(':tabbable').first().focus();
+            };
+            ListView.prototype.save = function () {
+                if (!this.editable) {
+                    return;
+                }
+                var container = this.editable.element;
+                var model = this.modelFromElement(container);
+                var form = $(container).find('[data-editform]');
+                if (form.valid()) {
+                    var formData = form.serializeArray();
+                    if (!this.trigger(EditingEvents[EditingEvents.Saving], { model: model, item: container, formData: formData })) {
+                        this.dataSource.save(model, formData);
+                    }
+                }
+            };
+            ListView.prototype.remove = function (item) {
+                var model = this.modelFromElement(item);
+                if (this.editable) {
+                    this.dataSource.cancelChanges(model);
+                    this.closeEditable();
+                }
+                if (!this.trigger(EditingEvents[EditingEvents.Removing], { model: model, item: item })) {
+                    this.dataSource.delete(model);
+                    this.element.prev('.alert-danger').remove();
+                }
+            };
+            ListView.prototype.add = function () {
+                var dataSource = this.dataSource, index = dataSource.indexOf((dataSource.view() || [])[0]);
+                if (index < 0) {
+                    index = 0;
+                }
+                this.element.prev('.alert-danger').remove();
+                if (this.settings.maxItems == null || dataSource.total < this.settings.maxItems) {
+                    this.cancel();
+                    dataSource.insert(index, {});
+                    this.edit(this.element.children().first());
+                    this.element.children().first().find(':tabbable').first().focus();
+                }
+                else {
+                    this.element.before($('<div class="alert alert-danger" role="alert">' + this.settings.maxItemsMessage + '</div>'));
+                }
+            };
+            ListView.prototype.cancel = function () {
+                if (this.editable) {
+                    var html = "";
+                    var container = this.editable.element;
+                    var view = this.dataSource.view();
+                    container.removeClass(ListView.editItemClass);
+                    var model = this.modelFromElement(container);
+                    if (!this.trigger(EditingEvents[EditingEvents.Cancelling], { model: model, container: container })) {
+                        this.dataSource.cancelChanges(model);
+                        this.closeEditable();
+                        container.find(':tabbable').first().focus();
+                    }
+                    if (!view.length && this.settings.emptyView != null) {
+                        html += this.settings.emptyView;
+                        this.element.append(html);
+                    }
+                }
+            };
+            ListView.prototype.modelFromElement = function (element) {
+                var uid = element.attr("data-uid");
+                return this.dataSource.getByUniqueId(uid);
+            };
+            ListView.prototype.closeEditable = function () {
+                var editable = this.editable;
+                if (editable) {
+                    var data = this.modelFromElement(editable.element);
+                    this.destroyEditable();
+                    var index = editable.element.index();
+                    var item = null;
+                    if (data == null || data.isNew()) {
+                        editable.element.remove();
+                    }
+                    else {
+                        var itemHtml = $(data.Html);
+                        editable.element.html(itemHtml.html());
+                        item = this.items.eq(index);
+                        item.attr("data-uid", data.uniqueId);
+                    }
+                    this.trigger(EditingEvents[EditingEvents.Cancelled], { model: data, item: item });
+                }
+                return true;
+            };
+            ListView.prototype.destroyEditable = function () {
+                var hasEditable = this.editable != null;
+                if (hasEditable) {
+                    this.editable = null;
+                }
+            };
+            ListView.prototype.initialiseCrudHandlers = function () {
+                var _this = this;
+                var clickEvent = "click" + ListView.nameSpace;
+                if (this.settings.editing.enabled) {
+                    this.element.on(clickEvent, "[data-editbutton]", function (e) {
+                        var item = $(e.target).closest("[" + "data-uid" + "]");
+                        _this.edit(item);
+                        e.preventDefault();
+                    });
+                    this.element.on(clickEvent, "[data-savebutton]", function (e) {
+                        _this.save();
+                        e.preventDefault();
+                    });
+                    this.element.on(clickEvent, "[data-cancelbutton]", function (e) {
+                        _this.cancel();
+                        e.preventDefault();
+                    });
+                }
+                this.element.on(clickEvent, "[data-removebutton]", function (e) {
+                    var item = $(e.target).closest("[" + "data-uid" + "]");
+                    _this.remove(item);
+                    e.preventDefault();
+                });
+            };
+            ListView.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.unbindDataSource();
+                this.destroyEditable();
+                this.element.off(ListView.nameSpace);
+                if (this.pager) {
+                    this.pager.destroy();
+                }
+            };
+            ListView.nameSpace = ".coreListView";
+            return ListView;
+        }(Core.DataBoundControl));
+        Core.ListView = ListView;
+        var ListViewSettings = (function (_super) {
+            __extends(ListViewSettings, _super);
+            function ListViewSettings() {
+                _super.apply(this, arguments);
+            }
+            return ListViewSettings;
+        }(Core.ObservableSettings));
+        Core.ListViewSettings = ListViewSettings;
+        var ListViewInitialiser = (function () {
+            function ListViewInitialiser() {
+                var _this = this;
+                this.initialise = function (container) {
+                    $(container).find('[data-listview]').each(function (index, element) {
+                        var settings = new ListViewSettings();
+                        settings.events.push(new Core.EventInfo(Core.DataEvents[Core.DataEvents.DataBound], function (e) {
+                            Core.currentPage.initialise($(e.sender.element));
+                        }));
+                        var listView = new ListView($(element), settings);
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return ListViewInitialiser;
+        }());
+        Core.ListViewInitialiser = ListViewInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.ListViewInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.listview.js.map
