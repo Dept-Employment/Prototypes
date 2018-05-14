@@ -1,0 +1,322 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.subcontainer {
+  padding-left: 38px;
+}
+.edititemserror {
+  float: none;
+}
+.edititemslist {
+  list-style: none;
+  padding-left: 8px;
+}
+.edititemslist li {
+  position: relative;
+  padding: 0 0 0 20px;
+}
+.edititemslist li a {
+  position: absolute;
+  left: 0;
+}
+.addavailableitemform {
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 10px;
+}
+.topskill {
+  color: #f7d832;
+}
+.m-emptyview {
+  font-weight: 500;
+}
+.profiledisplayurl {
+  white-space: pre-wrap;
+  /* css-3 */
+  white-space: -moz-pre-wrap;
+  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;
+  /* Opera 4-6 */
+  white-space: -o-pre-wrap;
+  /* Opera 7 */
+  -ms-word-wrap: break-word;
+  word-wrap: break-word;
+  /* Internet Explorer 5.5+ */
+}
+h2.section-title {
+  padding: 0 12px;
+}
+.available legend {
+  font-weight: 500;
+  font-size: 18px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.myprofile .panel-body [class*="col-"] {
+  padding: 0;
+}
+.careerprofile .panel-title h2,
+.careerprofile .panel-title h3 {
+  font-weight: 500;
+  font-size: 18px;
+  color: inherit;
+  line-height: 1.4285;
+  display: inline;
+}
+.careerprofile .panel-footer fieldset.available h2.title {
+  font-weight: 500;
+  font-size: 18px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  margin-top: 0;
+  padding: 0, 0, 0, 0;
+  line-height: inherit;
+  border-bottom: 1px solid #e5e5e5;
+}
+.header-actions.header-utility h3 {
+  margin-right: 180px;
+}
+.header-actions.actions {
+  float: right;
+  margin-top: 5px;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.header-actions.actions .btn {
+  float: right;
+}
+.m-listview-item,
+.m-displayview {
+  position: relative;
+}
+.m-listview-item:not(.m-listview-firstitem) .actions.header-actions {
+  top: 10px;
+}
+.socialprofiles {
+  margin-top: 10px;
+  border-top: 1px solid #E5E5E5;
+}
+.socialprofiles .header-utility h3 {
+  padding-top: 10px;
+  padding-bottom: 9px;
+}
+.socialprofiles .header-utility p {
+  line-height: 1.1;
+  padding: 11px 0;
+  margin: 0;
+}
+.socialprofiles .header-utility .actions {
+  margin: 0;
+}
+.socialprofiles .header-utility .socialicon {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-right: 5px;
+  float: left;
+}
+.socialprofiles .maintext a {
+  -ms-word-wrap: break-word;
+  word-wrap: break-word;
+}
+.socialprofiles .socialicon.fa-linkedin-square {
+  color: #007bb6;
+}
+.socialprofiles .form-group .socialicon {
+  padding-right: 1px;
+}
+.socialprofiles .form-group label {
+  vertical-align: top;
+  height: 32px;
+  padding-top: 6px;
+}
+.socialprofiles .m-listview {
+  padding-top: 15px;
+}
+.availability .checkboxlist .checkbox-label {
+  font-size: 16px;
+  font-weight: 500;
+}
+.evaluations .header-utility h3,
+.mediareferences .header-utility h3 {
+  padding: 5px 0 0;
+}
+.evaluations .m-listview-item blockquote,
+.mediareferences .m-listview-item blockquote {
+  font-size: 16px;
+}
+.evaluations .meta,
+.mediareferences .meta {
+  display: block;
+  font-weight: 400;
+  font-size: 14px;
+  margin: 10px 0 5px;
+}
+.evaluations .meta span,
+.mediareferences .meta span {
+  font-weight: 300;
+  color: #666;
+}
+.evaluations .meta span.badge,
+.mediareferences .meta span.badge {
+  color: white;
+}
+.evaluations .card .meta,
+.mediareferences .card .meta {
+  font-size: 16px;
+  border-bottom: 1px solid #eee;
+  margin: 5px 0 10px;
+  padding: 0 0 5px;
+}
+.evaluations .card ul,
+.mediareferences .card ul,
+.evaluations .card blockquote,
+.mediareferences .card blockquote {
+  font-size: 14px;
+}
+.evaluations .card .legend,
+.mediareferences .card .legend {
+  font-size: 14px;
+}
+.evaluations .card .rating-number,
+.mediareferences .card .rating-number {
+  color: #666;
+}
+.evaluations .view-details,
+.mediareferences .view-details {
+  display: block;
+  padding: 5px 0 0;
+  margin: 0;
+  font-weight: 400;
+  clear: both;
+  font-size: 14px;
+}
+.label-inverse {
+  border: 1px solid #444;
+  background: white;
+  color: #444;
+}
+.privacy .provider {
+  margin-bottom: 5px;
+}
+.privacy ul {
+  padding-left: 53px !important;
+}
+.portfolio dd {
+  margin-bottom: 11px;
+}
+.novalue {
+  font-style: italic;
+}
+.modal .modal-header h2 {
+  font-size: 18px;
+  font-weight: 500;
+}
+.video-js .vjs-big-play-button {
+  margin: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+@media (min-width: 480px) {
+  .socialprofiles .maintext {
+    margin-top: 0;
+  }
+}
+@media (min-width: 768px) {
+  .myprofile .panel-body .col-sm-8 {
+    padding-left: 0;
+    padding-right: 15px;
+  }
+  .myprofile .panel-body .col-sm-4 {
+    padding-left: 15px;
+    padding-right: 0;
+    border-left: 1px solid #dddddd;
+  }
+  .myprofile .panel-body .col-sm-4 .header-utility .actions {
+    float: left;
+  }
+  .myprofile .panel-body .col-sm-4 .header-utility .btn {
+    margin: 0;
+  }
+  .myprofile .panel-body .col-sm-4 .header-utility .btn.formedit {
+    margin: 0 0 0 5px;
+  }
+  .availability .checkboxlist {
+    display: table;
+    border-collapse: collapse;
+  }
+  .availability .checkboxlist .checkbox-label {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 15px 15px 15px 0;
+  }
+  .availability .checkboxlist .checkbox-row {
+    display: table-row;
+    border-bottom: 1px solid #ddd;
+  }
+  .availability .checkboxlist .checkbox-row .checkbox-label {
+    display: table-cell;
+  }
+  .availability .checkboxlist .checkbox-row:last-child {
+    border-bottom: none;
+  }
+}
+@media (min-width: 992px) {
+  .subcontainer {
+    padding-left: 27px;
+  }
+  .privacy ul {
+    padding-left: 42px !important;
+  }
+}
+/* Retina-ize images/icons */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  /* logo */
+  /*    .navbar-brand { background-image: url(../img/logo@2x.png) !important; background-repeat: no-repeat !important; background-size: 97px 29px !important; }*/
+}
+@media (max-width: 479px) {
+  .socialprofiles .input-group {
+    display: block;
+  }
+  .socialprofiles .input-group .input-group-addon {
+    clear: both;
+    display: block;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .socialprofiles .input-group .input-group-addon + .form-control {
+    border-radius: 4px;
+  }
+  .socialprofiles .input-group-lg .input-group-addon {
+    border-radius: 6px;
+  }
+  .socialprofiles .input-group-lg .input-group-addon + .form-control {
+    border-radius: 6px;
+  }
+  .socialprofiles .input-group-sm .input-group-addon {
+    border-radius: 3px;
+  }
+  .socialprofiles .input-group-sm .input-group-addon + .form-control {
+    border-radius: 3px;
+  }
+  .header-actions.header-utility h3 {
+    margin-right: auto;
+  }
+  .header-actions.actions {
+    float: left;
+    position: static;
+  }
+}
+/*# sourceMappingURL=Index.css.map */
+
+.new-header {
+    padding: 10px 0 !important;
+    margin: 0 !important;
+    font-size: inherit !important;
+    font-weight: 500 !important;	
+}

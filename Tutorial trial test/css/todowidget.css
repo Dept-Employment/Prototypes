@@ -1,0 +1,101 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.todo-list {
+  font-size: 16px;
+  /*@media all and (min-width:992px)*/
+}
+.todo-list .col-md-3 {
+  padding: 10px;
+}
+.todo-list .todoItem {
+  cursor: pointer;
+}
+.todo-list .row.CurrentDayDefaultNode {
+  background: none;
+  cursor: default;
+}
+.todo-list .row.CurrentDayDefaultNode:hover {
+  background: none;
+}
+.todo-list .row.CurrentDayDefaultNode .fa-stack {
+  display: none;
+}
+.todo-list .row.AppointmentsPersonal .fa-stack .fa-stack-2x {
+  color: #C6093B;
+}
+.todo-list .row.AppointmentsProvider .fa-stack .fa-stack-2x {
+  color: #00a1d0;
+}
+.todo-list .row.AppointmentActivity .fa-stack .fa-stack-2x {
+  color: #20aa63;
+}
+.todo-list .row.AppointmentDHS .fa-stack .fa-stack-2x {
+  color: #82c341;
+}
+.todo-list .row.JobPlanActive .fa-stack .fa-stack-2x {
+  color: #007a33;
+}
+.todo-list .row.JobPlanPending .fa-stack .fa-stack-2x {
+  color: #996E32;
+}
+.todo-list .row.JobSearchEfforts .fa-stack .fa-stack-2x {
+  color: #474c55;
+}
+.todo-list .row.WorkForDoleReferral .fa-stack .fa-stack-2x {
+  color: #1e376c;
+}
+.todo-list .row.JobReferral .fa-stack .fa-stack-2x {
+  color: #c04c36;
+}
+.todo-list .fa-stack {
+  margin-right: 7px;
+  width: 3em;
+  height: 3em;
+}
+.todo-list .fa-stack .fa-stack-2x {
+  font-size: 3em;
+  color: #999;
+  /*color: #20aa63;*/
+}
+.todo-list .fa-stack .fa-stack-1x {
+  top: 0.5em;
+}
+.todo-list .modal.expanded-event .modal-header {
+  padding: 10px 15px;
+}
+.todo-list .modal.expanded-event .modal-header .fa-stack-1x {
+  font-size: 14px;
+}
+.todo-list .modal.CurrentDayDefaultNode .fa-stack {
+  display: none;
+}
+.todo-list .modal.AppointmentsPersonal .fa-stack .fa-stack-2x {
+  color: #C6093B;
+}
+.todo-list .modal.AppointmentsProvider .fa-stack .fa-stack-2x {
+  color: #00a1d0;
+}
+.todo-list .modal.AppointmentActivity .fa-stack .fa-stack-2x {
+  color: #20aa63;
+}
+.todo-list .modal.AppointmentDHS .fa-stack .fa-stack-2x {
+  color: #82c341;
+}
+.todo-list .modal.JobPlanActive .fa-stack .fa-stack-2x {
+  color: #007a33;
+}
+.todo-list .modal.JobPlanPending .fa-stack .fa-stack-2x {
+  color: #996E32;
+}
+.todo-list .modal.JobSearchEfforts .fa-stack .fa-stack-2x {
+  color: #474c55;
+}
+.todo-list .modal.WorkForDoleReferral .fa-stack .fa-stack-2x {
+  color: #1e376c;
+}
+.todo-list .modal.JobReferral .fa-stack .fa-stack-2x {
+  color: #c04c36;
+}

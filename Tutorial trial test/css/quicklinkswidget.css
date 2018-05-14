@@ -1,0 +1,96 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.panel.quick-links ul li.list-group-item {
+  padding: 0;
+}
+.panel.quick-links ul li a {
+  padding: 10px 15px;
+  color: #444;
+  display: block;
+  -moz-transition: background-color 400ms;
+  -o-transition: background-color 400ms;
+  -webkit-transition: background-color 400ms;
+  transition: background-color 400ms;
+}
+.panel.quick-links ul li a .fa {
+  margin-right: 7px;
+  color: #666;
+  -moz-transition: color 400ms;
+  -o-transition: color 400ms;
+  -webkit-transition: color 400ms;
+  transition: color 400ms;
+}
+.panel.quick-links ul li a:hover {
+  text-decoration: none;
+  background: #eee;
+  -moz-transition: background-color 400ms;
+  -o-transition: background-color 400ms;
+  -webkit-transition: background-color 400ms;
+  transition: background-color 400ms;
+}
+.panel.quick-links ul li a:hover .fa {
+  color: #000;
+  -moz-transition: color 400ms;
+  -o-transition: color 400ms;
+  -webkit-transition: color 400ms;
+  transition: color 400ms;
+}
+.panel.quick-links .row {
+  padding: 0;
+  margin: 0;
+}
+.panel.quick-links .panel-body {
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .panel.quick-links ul li.list-group-item {
+    /*padding: 0;*/
+    /*margin:0;*/
+    border: none;
+    /*border-bottom:1px solid @job-grey5;*/
+  }
+  .panel.quick-links ul li.list-group-item:first-child {
+    /*border-top-width:1px;*/
+  }
+  .panel.quick-links ul li.list-group-item:nth-child(odd) {
+    /*border-right:1px solid @job-grey5;*/
+  }
+  .panel.quick-links .list-group:last-child .list-group-item:last-child {
+    border: none;
+    /*border-bottom:1px solid @job-grey5;
+            border-bottom-right-radius:0px;
+            border-bottom-left-radius:0px;*/
+  }
+  .flex-row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  .flex-item {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+}
+@media (min-width: 1200px) {
+}
+@media print {
+}
+/* Retina-ize images/icons */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  /* logo */
+  /*    .navbar-brand { background-image: url(../img/logo@2x.png) !important; background-repeat: no-repeat !important; background-size: 97px 29px !important; }*/
+}
