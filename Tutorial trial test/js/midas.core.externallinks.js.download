@@ -1,0 +1,33 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ExternalLinks = (function () {
+            function ExternalLinks() {
+                this.initialise = function (container) {
+                    var baseUrl = Midas.Core.currentPage.settings.baseUrl;
+                    baseUrl = baseUrl.replace("https://", "").replace("http://", "");
+                    container.find("a").each(function (index, element) {
+                        var url = $(element).attr("href");
+                        if (url != null && (url.indexOf("https://") == 0 || url.indexOf("http://") == 0)
+                            && url.indexOf(baseUrl) == -1) {
+                            var existingTitle = $(element).attr("title");
+                            if (existingTitle == null) {
+                                existingTitle = "";
+                            }
+                            $(element).attr("target", "_blank").attr("title", "External link. Opens in a new window.");
+                        }
+                    });
+                };
+            }
+            ExternalLinks.prototype.ready = function () {
+                this.initialise($(document));
+            };
+            return ExternalLinks;
+        }());
+        Core.ExternalLinks = ExternalLinks;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.ExternalLinks.js.map

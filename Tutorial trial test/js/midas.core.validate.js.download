@@ -1,0 +1,545 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/bootstrap/bootstrap.d.ts" />
+/// <reference path="typings/jquery-validation-unobtrusive/jquery-validation-unobtrusive.d.ts" />
+/// <reference path="typings/jquery.validation/jquery.validation.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var CoreValidate = (function () {
+            function CoreValidate() {
+                this.initialise = function () {
+                    InitializeValidation();
+                    // Override minlength, maxlength and rangelength to cater to [NumericLength]
+                    $.validator.addMethod("minlength", function (value, element, param) {
+                        return this.optional(element) || this.getLength($.trim(value), element) >= param;
+                    });
+                    $.validator.addMethod("maxlength", function (value, element, param) {
+                        return this.optional(element) || this.getLength($.trim(value), element) <= param;
+                    });
+                    // Override min validator to handle currencies
+                    $.validator.addMethod("min", function (value, element, param) {
+                        // Strip $ and , characters
+                        if (value != undefined && value != null) {
+                            value = value.replace(/\$/g, '').replace(/,/g, '');
+                        }
+                        return this.optional(element) || Number(value) >= Number(param);
+                    });
+                    // Override max validator to handle currencies
+                    $.validator.addMethod("max", function (value, element, param) {
+                        // Strip $ and , characters
+                        if (value != undefined && value != null) {
+                            value = value.replace(/\$/g, '').replace(/,/g, '');
+                        }
+                        return this.optional(element) || Number(value) <= Number(param);
+                    });
+                    // Override range validator to handle currencies
+                    $.validator.addMethod("range", function (value, element, param) {
+                        // Strip $ and , characters
+                        if (value != undefined && value != null) {
+                            value = value.replace(/\$/g, '').replace(/,/g, '');
+                        }
+                        return this.optional(element) || (value >= param[0] && value <= param[1]);
+                    });
+                    $.validator.addMethod("requiredhtml", function (value, element, param) {
+                        var ckeditor = $('#cke_' + $(element).attr('id'));
+                        var ckeditorDesc = ckeditor.find('div.cke_wysiwyg_div > p');
+                        if (ckeditorDesc.length == 0) {
+                            ckeditorDesc = ckeditor.find('div.cke_wysiwyg_div');
+                        }
+                        if (ckeditorDesc.length > 0) {
+                            var html = ckeditorDesc.html();
+                            if (html != undefined && html.length > 0 && html != '<br>') {
+                                ckeditor.removeClass("input-validation-error");
+                                return true;
+                            }
+                            else {
+                                ckeditor.addClass("input-validation-error");
+                            }
+                        }
+                        return false;
+                    });
+                    $.validator.addMethod("daterange", function (value, element, params) {
+                        var startingDate = null;
+                        if (params["comparisondateproperty"] != null && params["comparisondateproperty"] != "") {
+                            startingDate = $.coreValidate.getDependentValue(element, params["comparisondateproperty"]);
+                            if (startingDate != null) {
+                                startingDate = Date.parse(startingDate);
+                            }
+                        }
+                        var val = Date.parse(value);
+                        if (startingDate == null) {
+                            startingDate = Date.today();
+                        }
+                        var dates = Midas.Core.currentPage.datePicker.GetMinMaxDate(element);
+                        var message = $(element).attr("data-val-daterange");
+                        message = message.replace("{0}", dates.minDate.toString("d-MMM-yyyy")).replace("{1}", dates.maxDate.toString("d-MMM-yyyy"));
+                        // kinda hacky but this is the only dynamic error label
+                        this.settings.messages[element.name].daterange = message;
+                        if (dates.minDate <= val && val <= dates.maxDate) {
+                            return true;
+                        }
+                        else {
+                            return false;
+                        }
+                    });
+                    $.validator.addMethod("requiredif", function (value, element, params) {
+                        if ($.coreValidate.isRequiredIf(element, params["dependentproperty"], params["comparisontype"], params["value"])) {
+                            if (element.type == 'radio') {
+                                value = false;
+                                // Grab all radio buttons for property and see if any are selected
+                                var elementProperties = $('input:radio[name="' + element.name + '"]');
+                                for (var index = 0; index != elementProperties.length; index++) {
+                                    if (elementProperties[index]["checked"]) {
+                                        value = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (value != null) {
+                                var isNotEmptyString = value.toString().replace(/^\s\s*/, '').replace(/\s\s*$/, '') != "";
+                                if ($.coreValidate.isDate(value)) {
+                                    return Date.parse(value) != new Date('1/01/0001 12:00');
+                                }
+                                if ($.coreValidate.isBool(value)) {
+                                    return (/^true$/i.test(value));
+                                }
+                                if ($.coreValidate.isInteger(value)) {
+                                    return parseInt(value) != 0;
+                                }
+                                if ($.coreValidate.isFloat(value)) {
+                                    var floatValue = parseFloat(value);
+                                    var floatValueAsString = (floatValue + "").split(".");
+                                    if (floatValueAsString.length == 2) {
+                                        var numberToCompare = "0.";
+                                        for (var i = 0; i < floatValueAsString[1].length; i++) {
+                                            numberToCompare = numberToCompare + "0";
+                                        }
+                                        return floatValue != parseFloat(numberToCompare);
+                                    }
+                                    return floatValue != 0;
+                                }
+                                return isNotEmptyString;
+                            }
+                        }
+                        else {
+                            return true;
+                        }
+                        return false;
+                    });
+                    $.validator.addMethod("comparevalue", function (value, element, params) {
+                        //only perform comparison if field is required
+                        if ((params['onlyifrequired'] == true || params['onlyifrequired'] === 'True') && $(element).is('[data-val-requiredif]')) {
+                            var reqDependentProp = $(element).data('val-requiredif-dependentproperty');
+                            var reqCompareType = $(element).data('val-requiredif-comparisontype');
+                            var reqCompareValue = $(element).data('val-requiredif-value');
+                            if (!$.coreValidate.isRequiredIf(element, reqDependentProp, reqCompareType, reqCompareValue)) {
+                                return true;
+                            }
+                        }
+                        var dependentPropertyValue = undefined;
+                        if (params["dependentproperty"] != '') {
+                            dependentPropertyValue = $.coreValidate.getDependentValue(element, params["dependentproperty"]);
+                        }
+                        var comparisonType = params["comparisontype"];
+                        var valueToTestAgainst = params["value"];
+                        // Handle case where value to test against is an array
+                        if ($.coreValidate.isJSON(params["value"])) {
+                            var valuesToTestAgainst = $.parseJSON(params["value"]);
+                            if ($.isArray(valuesToTestAgainst)) {
+                                valueToTestAgainst = valuesToTestAgainst;
+                            }
+                        }
+                        if (dependentPropertyValue == undefined && $.coreValidate.is(value, comparisonType, valueToTestAgainst)) {
+                            return true;
+                        }
+                        else if (dependentPropertyValue != undefined && $.coreValidate.is(value, comparisonType, dependentPropertyValue)) {
+                            return true;
+                        }
+                        return false;
+                    });
+                    $.validator.addMethod("coreajax", function (value, element, params) {
+                        if (this.optional(element)) {
+                            return "dependency-mismatch";
+                        }
+                        var previous = this.previousValue(element), validator, data;
+                        if (!this.settings.messages[element.name]) {
+                            this.settings.messages[element.name] = {};
+                        }
+                        params = typeof params === "string" && { url: params } || params;
+                        if (previous.old === value) {
+                            return previous.valid;
+                        }
+                        previous.old = value;
+                        validator = this;
+                        this.startRequest(element);
+                        data = {};
+                        var req = $.extend(true, {
+                            url: params,
+                            mode: "abort",
+                            port: "validate" + element.name,
+                            dataType: "json",
+                            data: data,
+                            context: validator.currentForm,
+                            global: false,
+                            beforeSend: Midas.Core.ajax.beforeSend,
+                            success: function (response) {
+                                var valid = response.Status == 1, errors, message, submitted;
+                                validator.settings.messages[element.name].coreajax = response.Message || validator.defaultMessage(element, "coreajax");
+                                if (valid) {
+                                    submitted = validator.formSubmitted;
+                                    validator.prepareElement(element);
+                                    validator.formSubmitted = submitted;
+                                    validator.successList.push(element);
+                                    delete validator.invalid[element.name];
+                                    validator.showErrors();
+                                }
+                                else {
+                                    errors = {};
+                                    message = response.Message || validator.defaultMessage(element, "coreajax");
+                                    errors[element.name] = previous.message = $.isFunction(message) ? message(value) : message;
+                                    validator.invalid[element.name] = true;
+                                    validator.showErrors(errors);
+                                }
+                                previous.valid = valid;
+                                validator.stopRequest(element, valid);
+                            }
+                        }, params);
+                        $.ajax(req);
+                        return "pending";
+                    });
+                    $.validator.addMethod('abn', function (value, element, params) {
+                        var isValid = false;
+                        var abn = value;
+                        var weight = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
+                        var sum = 0;
+                        var reNum = /^\d+$/;
+                        // Ensure ABN is 11 digits long
+                        if (abn != null && abn != "" && abn.length == 11 && reNum.test(abn)) {
+                            // Sum the multiplication of all the digits and weights
+                            for (var i = 0; i < weight.length; i++) {
+                                // Subtract 1 from the first left digit before multiplying against the weight
+                                if (i == 0) {
+                                    sum = (parseInt(abn.substr(i, 1)) - 1) * weight[i];
+                                }
+                                else {
+                                    sum += parseInt(abn.substr(i, 1)) * weight[i];
+                                }
+                            }
+                            // Divide the sum by 89, if there is no remainder the ABN is valid
+                            if ((sum % 89) == 0) {
+                                isValid = true;
+                            }
+                        }
+                        return isValid;
+                    });
+                    $.validator.addMethod('checkboxlistrequired', function (value, element, params) {
+                        var atLeastOneIsChecked = false;
+                        $('input[type=checkbox][name^="' + params.propertyname + '"]').each(function () {
+                            if ($(this).prop("checked") == true) {
+                                atLeastOneIsChecked = true;
+                            }
+                        });
+                        return atLeastOneIsChecked;
+                    });
+                    $.validator.addMethod("accept", function (value, element, params) {
+                        var valueSegments = value.split(".");
+                        if (valueSegments.length >= 2) {
+                            var extension = "." + valueSegments[valueSegments.length - 1];
+                            var extensions = params["extensions"].split(", ");
+                            for (var i = 0; i < extensions.length; i++) {
+                                if ($.trim(extension).toLowerCase() == $.trim(extensions[i]).toLowerCase()) {
+                                    return true;
+                                }
+                            }
+                        }
+                        else {
+                            return true;
+                        }
+                        return false;
+                    });
+                    $.validator.addMethod("httppostedfilesize", function (value, element, params) {
+                        if ('FileReader' in window) {
+                            // Browser doesn't support the FileReader functionality. Let server validation handle it.
+                            return true;
+                        }
+                        var input = element;
+                        if (!input.files) {
+                            // Browser doesn't support the files property. Let server validation handle it.
+                            return true;
+                        }
+                        var file = input.files[0];
+                        if (file) {
+                            var maxFileSize = params["maxfilesize"];
+                            return file.size <= maxFileSize;
+                        }
+                        else {
+                            return true;
+                        }
+                    });
+                    $.validator.addMethod("maxtags", function (value, element, params) {
+                        var skillList = value.split(',');
+                        var maxTags = $(element).attr('data-tagsinput-maxtags'); // params["maxtagscount"];
+                        var maxTagsRegex = $(element).attr('data-tagsinput-maxtagsregex'); // params["maxtagsregex"];
+                        var regex = new RegExp(maxTagsRegex);
+                        if (value && value.length > 0 && !regex.test(value)) {
+                            return false;
+                        }
+                        return true;
+                    }, '');
+                    $.validator.addMethod("maxtaglength", function (value, element, params) {
+                        var skillList = value.split(',');
+                        var maxTagLength = $(element).attr('data-tagsinput-maxtaglength'); // params["maxtaglengthcount"];
+                        for (var counter = 0; counter < skillList.length; counter++) {
+                            if (skillList[counter].trim().length > maxTagLength) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }, '');
+                    // Override these methods to cater for our dropdown list parent div
+                    $.validator.setDefaults({
+                        highlight: function (element, errorClass, validClass) {
+                            if (element.type === "radio") {
+                                this.findByName(element.name).addClass(errorClass).removeClass(validClass);
+                            }
+                            else if (element.type === "select-one" || element.type === "checkbox") {
+                                this.findByName(element.name).parent().addClass(errorClass).removeClass(validClass);
+                            }
+                            else {
+                                $(element).addClass(errorClass).removeClass(validClass);
+                            }
+                        },
+                        unhighlight: function (element, errorClass, validClass) {
+                            if (element.type === "radio") {
+                                this.findByName(element.name).removeClass(errorClass).addClass(validClass);
+                            }
+                            else if (element.type === "select-one" || element.type === "checkbox") {
+                                this.findByName(element.name).parent().removeClass(errorClass).addClass(validClass);
+                            }
+                            else {
+                                $(element).removeClass(errorClass).addClass(validClass);
+                            }
+                        }
+                    });
+                    $.coreValidate = function () { };
+                    $.coreValidate.getFieldPrefixFromId = function (property, id) {
+                        var propertyId = property.id;
+                        var delimiter = '_';
+                        var prefix = '';
+                        if (propertyId.lastIndexOf(delimiter) != -1) {
+                            prefix = propertyId.substring(0, propertyId.lastIndexOf(delimiter) + 1);
+                        }
+                        return prefix + id;
+                    };
+                    $.coreValidate.isJSON = function (input) {
+                        try {
+                            var parsedValue = $.parseJSON(input);
+                            if (typeof parsedValue != 'object') {
+                                return false;
+                            }
+                        }
+                        catch (e) {
+                            return false;
+                        }
+                        return true;
+                    };
+                    $.coreValidate.is = function (value1, operator, value2) {
+                        var values1Array = [];
+                        if ($.isArray(value1)) {
+                            values1Array = value1;
+                        }
+                        else {
+                            values1Array.push(value1);
+                        }
+                        var values2Array = [];
+                        if ($.isArray(value2)) {
+                            values2Array = value2;
+                        }
+                        else {
+                            values2Array.push(value2);
+                        }
+                        var results = [];
+                        for (var i = 0; i < values1Array.length; i++) {
+                            for (var j = 0; j < values2Array.length; j++) {
+                                results.push(this.comparisonTest(values1Array[i], operator, values2Array[j]));
+                            }
+                        }
+                        if (operator == "NotEqualTo") {
+                            // Negative AND validation (all must be true)
+                            return $.inArray(false, results) == -1; // array must not contain false.
+                        }
+                        else {
+                            // Positive OR validation (at least one must be true)
+                            return $.inArray(true, results) != -1; // array must at least contain one true.
+                        }
+                    };
+                    $.coreValidate.comparisonTest = function (value1, operator, value2) {
+                        if (this.isDate(value1)) {
+                            value1 = isNaN(value1) ? Date.parse('01/01/0001 ' + value1) : Date.parse(value1);
+                            value2 = isNaN(value2) ? Date.parse('01/01/0001 ' + value2) : Date.parse(value2);
+                        }
+                        else if (this.isBool(value1)) {
+                            if (/^true$/i.test(value1)) {
+                                value1 = true;
+                            }
+                            else if (/^false$/i.test(value1)) {
+                                value1 = false;
+                            }
+                            if (/^true$/i.test(value2)) {
+                                value2 = true;
+                            }
+                            else if (/^false$/i.test(value2)) {
+                                value2 = false;
+                            }
+                            value1 = !!value1;
+                            value2 = !!value2;
+                        }
+                        else if (this.isNumeric(value1) && this.isNumeric(value2)) {
+                            value1 = parseFloat(value1);
+                            value2 = parseFloat(value2);
+                        }
+                        switch (operator) {
+                            case "EqualTo":
+                                if (value1 == value2)
+                                    return true;
+                                break;
+                            case "NotEqualTo":
+                                if (value1 != value2)
+                                    return true;
+                                break;
+                            case "GreaterThan":
+                                if (value1 > value2)
+                                    return true;
+                                break;
+                            case "LessThan":
+                                if (value1 < value2)
+                                    return true;
+                                break;
+                            case "GreaterThanOrEqualTo":
+                                if (value1 >= value2)
+                                    return true;
+                                break;
+                            case "LessThanOrEqualTo":
+                                if (value1 <= value2)
+                                    return true;
+                                break;
+                            case "RegExMatch":
+                                return (new RegExp(value2)).test(value1);
+                            case "NotRegExMatch":
+                                return !(new RegExp(value2)).test(value1);
+                        }
+                        return false;
+                    };
+                    $.coreValidate.getId = function (element, dependentProperty) {
+                        var pos = element.id.lastIndexOf("_") + 1;
+                        return element.id.substr(0, pos) + dependentProperty;
+                    };
+                    $.coreValidate.getName = function (element, dependentProperty) {
+                        var pos = element.name.lastIndexOf(".") + 1;
+                        return element.name.substr(0, pos) + dependentProperty;
+                    };
+                    $.coreValidate.isNullish = function (input) {
+                        return input == null || input == undefined || $.trim(input) == "";
+                    };
+                    $.coreValidate.isNumeric = function (input) {
+                        return (input - 0) == input && input.length > 0;
+                    };
+                    $.coreValidate.isInteger = function (input) {
+                        return /^\d+$/.test(input);
+                    };
+                    $.coreValidate.isFloat = function (input) {
+                        return /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/.test(input);
+                    };
+                    $.coreValidate.isDate = function (input) {
+                        var dateTest = new RegExp("/^(?=\d)(?:(?!(?:(?:0?[5-9]|1[0-4])(?:\.|-|\/)10(?:\.|-|\/)(?:1582))|(?:(?:0?[3-9]|1[0-3])(?:\.|-|\/)0?9(?:\.|-|\/)(?:1752)))(31(?!(?:\.|-|\/)(?:0?[2469]|11))|30(?!(?:\.|-|\/)0?2)|(?:29(?:(?!(?:\.|-|\/)0?2(?:\.|-|\/))|(?=\D0?2\D(?:(?!000[04]|(?:(?:1[^0-6]|[2468][^048]|[3579][^26])00))(?:(?:(?:\d\d)(?:[02468][048]|[13579][26])(?!\x20BC))|(?:00(?:42|3[0369]|2[147]|1[258]|09)\x20BC))))))|2[0-8]|1\d|0?[1-9])([-.\/])(1[012]|(?:0?[1-9]))\2((?=(?:00(?:4[0-5]|[0-3]?\d)\x20BC)|(?:\d{4}(?:$|(?=\x20\d)\x20)))\d{4}(?:\x20BC)?)(?:$|(?=\x20\d)\x20))?((?:(?:0?[1-9]|1[012])(?::[0-5]\d){0,2}(?:\x20[aApP][mM]))|(?:[01]\d|2[0-3])(?::[0-5]\d){1,2})?$/");
+                        return dateTest.test(input);
+                    };
+                    $.coreValidate.isBool = function (input) {
+                        return /^true$/i.test(input) || /^false$/i.test(input);
+                    };
+                    $.coreValidate.replaceAll = function (text, target, replacement) {
+                        while (text.indexOf(target) != -1) {
+                            text = text.replace(target, replacement);
+                        }
+                        return text;
+                    };
+                    $.coreValidate.getDependentValue = function (element, propertyName) {
+                        var dependentProperty = $.coreValidate.getFieldPrefixFromId(element, propertyName);
+                        var dependentPropertyElement = $('#' + dependentProperty);
+                        var dependentPropertyValue = null;
+                        //search for multi select checkboxlist
+                        if (dependentPropertyElement.length == 0) {
+                            dependentPropertyElement = $('#' + dependentProperty + '0');
+                            dependentPropertyValue = [];
+                            if (dependentPropertyElement.length > 0 && (dependentPropertyElement[0].type == 'checkbox' || dependentPropertyElement[0].type == 'radio')) {
+                                $('[name="' + dependentPropertyElement.attr("name") + '"]').each(function () {
+                                    if ($(this).prop("checked")) {
+                                        dependentPropertyValue.push($(this).val());
+                                    }
+                                });
+                            }
+                        }
+                        else if (dependentPropertyElement[0].type == 'checkbox') {
+                            if (dependentPropertyElement.prop("checked")) {
+                                dependentPropertyValue = dependentPropertyElement[0].value;
+                            }
+                        }
+                        else if (dependentPropertyElement[0].type == 'radio') {
+                            // Grab all radio buttons for dependent property and use selected value
+                            var dependentProperties = $('input:radio[name="' + $.coreValidate.replaceAll(dependentProperty, '_', '.') + '"]');
+                            for (var index = 0; index != dependentProperties.length; index++) {
+                                if (dependentProperties[index]["checked"]) {
+                                    dependentPropertyValue = dependentProperties[index].value;
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            dependentPropertyValue = dependentPropertyElement[0].value;
+                        }
+                        return dependentPropertyValue;
+                    };
+                    $.coreValidate.getDependentControls = function (element, propertyName) {
+                        var dependentProperty = $.coreValidate.getFieldPrefixFromId(element, propertyName);
+                        var dependentPropertyElement = $('#' + dependentProperty);
+                        if (dependentPropertyElement.length == 0) {
+                            dependentPropertyElement = $('#' + dependentProperty + '0');
+                            if (dependentPropertyElement.length > 0 && (dependentPropertyElement[0].type == 'checkbox' || dependentPropertyElement[0].type == 'radio')) {
+                                return $('[name="' + dependentPropertyElement.attr("name") + '"]');
+                            }
+                        }
+                        else if (dependentPropertyElement[0].type == 'radio') {
+                            return $('input:radio[name="' + $.coreValidate.replaceAll(dependentProperty, '_', '.') + '"]');
+                        }
+                        return dependentPropertyElement;
+                    };
+                    $.coreValidate.isRequiredIf = function (element, dependentProperty, comparisonType, valueToTestAgainst) {
+                        var dependentPropertyValue = $.coreValidate.getDependentValue(element, dependentProperty);
+                        // Handle case where value to test against is an array
+                        if ($.coreValidate.isJSON(valueToTestAgainst)) {
+                            var valuesToTestAgainst = $.parseJSON(valueToTestAgainst);
+                            if ($.isArray(valuesToTestAgainst)) {
+                                valueToTestAgainst = valuesToTestAgainst;
+                            }
+                        }
+                        return $.coreValidate.is(dependentPropertyValue, comparisonType, valueToTestAgainst);
+                    };
+                    function InitializeValidation() {
+                        $.validator.setDefaults({
+                            onfocusout: function (element) { $(element).valid(); },
+                            onkeyup: false
+                        });
+                    }
+                };
+            }
+            return CoreValidate;
+        }());
+        Core.CoreValidate = CoreValidate;
+        Core.coreValidate = new Midas.Core.CoreValidate();
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    Midas.Core.coreValidate.initialise();
+});
+//# sourceMappingURL=midas.core.validate.js.map

@@ -1,0 +1,57 @@
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Spelling = (function () {
+            function Spelling() {
+                this.ready = function () {
+                    var toggle = (function () {
+                        var fields = $('[data-spellcheck]');
+                        var textspellchecker = null;
+                        var htmlspellchecker = null;
+                        function create() {
+                            textspellchecker = new $.SpellChecker(fields, {
+                                lang: 'en',
+                                parser: 'text',
+                                webservice: {
+                                    path: '/validation/spelling/check'
+                                },
+                                suggestBox: {
+                                    position: 'below'
+                                },
+                                incorrectWords: {
+                                    position: function (container) {
+                                        this.after(container);
+                                    }
+                                }
+                            });
+                            textspellchecker.on('check.success', function () {
+                                alert('There are no incorrectly spelt words.');
+                            });
+                            textspellchecker.on('check.fail', function () {
+                                Midas.Core.currentPage.summary.toggleWarningSummary("Spelling mistake found", true);
+                                fields.each(function () {
+                                });
+                            });
+                            textspellchecker.on('replace.word', function (incorrectWords) {
+                            });
+                            textspellchecker.check();
+                        }
+                        function destroy() {
+                            textspellchecker.destroy();
+                            textspellchecker = null;
+                        }
+                        function toggle() {
+                            (!textspellchecker) ? create() : destroy();
+                        }
+                        return toggle;
+                    })();
+                    $("#check-spelling").click(toggle);
+                };
+            }
+            return Spelling;
+        }());
+        Core.Spelling = Spelling;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.spelling.js.map

@@ -1,0 +1,80 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Summary = (function () {
+            function Summary() {
+                var _this = this;
+                this.toggleInfoSummary = function (message, scrollToSummary, clearOldMessages, parentContainer) {
+                    if (scrollToSummary === void 0) { scrollToSummary = false; }
+                    if (clearOldMessages === void 0) { clearOldMessages = false; }
+                    if (parentContainer === void 0) { parentContainer = null; }
+                    _this.toggleSummary("[data-summary-information]", message, scrollToSummary, clearOldMessages, parentContainer);
+                };
+                this.toggleSuccessSummary = function (message, scrollToSummary, clearOldMessages, parentContainer) {
+                    if (scrollToSummary === void 0) { scrollToSummary = false; }
+                    if (clearOldMessages === void 0) { clearOldMessages = false; }
+                    if (parentContainer === void 0) { parentContainer = null; }
+                    _this.toggleSummary("[data-summary-success]", message, scrollToSummary, clearOldMessages, parentContainer);
+                };
+                this.toggleWarningSummary = function (message, scrollToSummary, clearOldMessages, parentContainer) {
+                    if (scrollToSummary === void 0) { scrollToSummary = false; }
+                    if (clearOldMessages === void 0) { clearOldMessages = false; }
+                    if (parentContainer === void 0) { parentContainer = null; }
+                    _this.toggleSummary("[data-summary-warning]", message, scrollToSummary, clearOldMessages, parentContainer);
+                };
+                this.toggleSummary = function (summarySelector, message, scrollToSummary, clearOldMessages, parentContainer) {
+                    if (parentContainer == null) {
+                        parentContainer = $(document);
+                    }
+                    if (message.slice(-1) != ".") {
+                        message += ".";
+                    }
+                    var summary = parentContainer.find(summarySelector).first();
+                    if (summary.length) {
+                        clearOldMessages = clearOldMessages !== undefined ? clearOldMessages : true;
+                        if (clearOldMessages) {
+                            _this.clearSummaries();
+                        }
+                        var data = '<li>' + message + '</li>';
+                        summary.find("ul").append(data);
+                        summary.toggleClass("hidden", false);
+                        scrollToSummary = scrollToSummary !== undefined ? scrollToSummary : false;
+                        if (scrollToSummary) {
+                            Midas.Core.currentPage.scrollToElement(summary, null, null);
+                        }
+                    }
+                };
+                this.clearSummaries = function () {
+                    _this.clearSummarySuccess();
+                    _this.clearSummaryInfo();
+                    _this.clearSummaryWarning();
+                    _this.clearSummaryError();
+                };
+                this.clearSummarySuccess = function () {
+                    _this.clearSummary($("[data-summary-success]"));
+                };
+                this.clearSummaryInfo = function () {
+                    _this.clearSummary($("[data-summary-information]"));
+                };
+                this.clearSummaryWarning = function () {
+                    _this.clearSummary($("[data-summary-warning]"));
+                };
+                this.clearSummaryError = function () {
+                    _this.clearSummary($(".validation-summary-errors"));
+                };
+                this.clearSummary = function (summaryElement) {
+                    if (summaryElement != null) {
+                        summaryElement.toggleClass("hidden", true);
+                        summaryElement.find("ul").html("");
+                    }
+                };
+            }
+            return Summary;
+        }());
+        Core.Summary = Summary;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.Summary.js.map

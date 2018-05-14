@@ -1,0 +1,94 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="typings/jquery.pnotify/jquery.pnotify.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SessionTimer = (function () {
+            function SessionTimer() {
+                var _this = this;
+                this.initialise = function (container) {
+                };
+                this.ready = function () {
+                    _this.timeout = parseInt($('html').data('session-timeout'));
+                    _this.isReady = true;
+                    _this.reset();
+                    var enabled = $('html').data('sessiontimer-enabled');
+                    if (enabled) {
+                        _this.enable();
+                    }
+                };
+                this.reset = function () {
+                    if (_this.currentNotification != null) {
+                        _this.currentNotification.remove();
+                    }
+                    _this.stop();
+                    _this.start();
+                };
+                this.stop = function () {
+                    if (_this.registeredTimeout != null) {
+                        clearTimeout(_this.registeredTimeout);
+                    }
+                    if (_this.expiredTimeout != null) {
+                        clearTimeout(_this.expiredTimeout);
+                    }
+                };
+                this.start = function () {
+                    if (_this.enabled && _this.isReady) {
+                        _this.expiry = new Date();
+                        var promptafter = _this.timeout - _this.minutesLeftPrompt;
+                        _this.expiry.setMinutes(_this.expiry.getMinutes() + _this.timeout);
+                        var milliseconds = promptafter * 60 * 1000;
+                        _this.registeredTimeout = setTimeout(function () {
+                            _this.currentNotification = Midas.Core.currentPage.notification.stackbar('Your session will expire in: <div id="session-clock" class="clock"></div>', 'Press Continue to stay logged in. If your session expires any changes you have made may be lost.', [_this.continueButton]);
+                            var clock = $("#session-clock");
+                            clock.countdown(_this.expiry, function (event) {
+                                clock.html(event.strftime('%M:%S (mm:ss)'));
+                            });
+                            _this.expiredTimeout = setTimeout(function () {
+                                _this.currentNotification.remove();
+                                window.location.href = "/SessionExpired";
+                            }, _this.minutesLeftPrompt * 60 * 1000);
+                        }, milliseconds);
+                    }
+                };
+                this.enable = function () {
+                    _this.enabled = true;
+                    _this.reset();
+                };
+                this.disable = function () {
+                    _this.enabled = false;
+                    _this.stop();
+                };
+                this.continueHandler = function (notice, value) {
+                    $.ajax({
+                        url: "/session/renew",
+                        type: "GET",
+                        data: {},
+                        global: false,
+                        success: function (data) {
+                        },
+                        error: function (request, textStatus, errorThrown) {
+                            Midas.Core.currentPage.showGenericErrorModal();
+                        }
+                    });
+                    _this.reset();
+                    notice.get().trigger("pnotify.confirm", [notice, value]);
+                    var clock = $("#session-clock");
+                    clock.countdown('stop');
+                };
+                this.minutesLeftPrompt = 5;
+                this.continueButton = {
+                    text: "Continue",
+                    addClass: "pull-right primary cta",
+                    promptTrigger: true,
+                    click: this.continueHandler
+                };
+            }
+            return SessionTimer;
+        }());
+        Core.SessionTimer = SessionTimer;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.SessionTimer.js.map

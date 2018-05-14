@@ -1,0 +1,117 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ResponsiveHelper = (function (_super) {
+            __extends(ResponsiveHelper, _super);
+            function ResponsiveHelper() {
+                var _this = this;
+                _super.call(this);
+                this.visibleClassFormatString = "visible-{0}-block";
+                this.ready = function () {
+                    if (_this.element.length === 0) {
+                        $('<div id="ResponsiveHelper"></div>').appendTo('body');
+                        for (var screenSizeIndex in _this.screenSizes) {
+                            var screenSize = _this.screenSizes[screenSizeIndex];
+                            var visibleClass = String.format(_this.visibleClassFormatString, screenSize);
+                            _this.element.append($(String.format('<div class="{0}"></div>', visibleClass)));
+                        }
+                        var currentScreenSize = _this.getCurrentScreenSize();
+                        $(window).resize(function () {
+                            var newScreenSize = _this.getCurrentScreenSize();
+                            if (newScreenSize != currentScreenSize) {
+                                currentScreenSize = newScreenSize;
+                                _this.trigger(ResponsiveEvents[ResponsiveEvents.ScreenSizeChanged], { screenSize: newScreenSize });
+                            }
+                        });
+                    }
+                };
+                this.getCurrentScreenSize = function () {
+                    var currentScreenSize = null;
+                    for (var screenSizeIndex in _this.screenSizes) {
+                        var screenSize = _this.screenSizes[screenSizeIndex];
+                        var visibleClass = String.format(_this.visibleClassFormatString, screenSize);
+                        if (_this.element.find('.' + visibleClass).is(':visible')) {
+                            currentScreenSize = screenSize;
+                        }
+                    }
+                    return currentScreenSize;
+                };
+                this.getEffectiveColumnClass = function (element) {
+                    var effectiveColumnClass = 'col-xs-12';
+                    var columnClasses = _this.getColumnClasses(element);
+                    var currentScreenSize = _this.getCurrentScreenSize();
+                    for (var screenSizeIndex in _this.screenSizes) {
+                        var screenSize = _this.screenSizes[screenSizeIndex];
+                        var colClassName = String.format('col-{0}', screenSize);
+                        for (var columnClassIndex in columnClasses) {
+                            var columnClass = columnClasses[columnClassIndex];
+                            if (columnClass.indexOf(colClassName) === 0) {
+                                effectiveColumnClass = columnClass;
+                            }
+                        }
+                        if (screenSize == currentScreenSize) {
+                            break;
+                        }
+                    }
+                    return effectiveColumnClass;
+                };
+                this.getColumnClasses = function (element) {
+                    var columnClasses = new Array();
+                    if (element.attr('class') != null) {
+                        var classes = element.attr('class').split(/\s+/);
+                        for (var i = 0; i < classes.length; ++i) {
+                            if (classes[i].indexOf('col-') === 0) {
+                                columnClasses.push(classes[i]);
+                            }
+                        }
+                    }
+                    return columnClasses;
+                };
+                this.getEffectiveColumnCount = function (element) {
+                    var effectiveColumnClass = _this.getEffectiveColumnClass(element);
+                    return _this.getColumnCount(effectiveColumnClass);
+                };
+                this.getColumnCount = function (columnClass) {
+                    return parseInt(columnClass.substring(columnClass.lastIndexOf('-') + 1));
+                };
+                this.getColumnClass = function (screenSize, columnCount) {
+                    return String.format('col-{0}-{1}', screenSize, columnCount);
+                };
+                this.screenSizes = new Array();
+                this.screenSizes.push('xs');
+                this.screenSizes.push('sm');
+                this.screenSizes.push('md');
+                this.screenSizes.push('lg');
+            }
+            Object.defineProperty(ResponsiveHelper.prototype, "element", {
+                get: function () {
+                    return $('#ResponsiveHelper');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ResponsiveHelper.prototype, "maxColumnCount", {
+                get: function () {
+                    return 12;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return ResponsiveHelper;
+        }(Core.Observable));
+        Core.ResponsiveHelper = ResponsiveHelper;
+        (function (ResponsiveEvents) {
+            ResponsiveEvents[ResponsiveEvents["ScreenSizeChanged"] = 0] = "ScreenSizeChanged";
+        })(Core.ResponsiveEvents || (Core.ResponsiveEvents = {}));
+        var ResponsiveEvents = Core.ResponsiveEvents;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.responsivehelper.js.map

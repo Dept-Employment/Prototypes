@@ -1,0 +1,42 @@
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var FileUpload = (function () {
+            function FileUpload() {
+                var _this = this;
+                this.initialise = function (container) {
+                    container.find('[data-fileinput-button]').each(function (index, item) {
+                        var input = $(item).find("input");
+                        var buttonLabel = $(item).find('[data-fileinput-buttonlabel]');
+                        var buttonLabelText = buttonLabel.html();
+                        input.on('change', function (e) {
+                            var fileName = '';
+                            if (this.files && this.files.length > 1) {
+                                fileName = (this.getAttribute('data-multiple-caption') || '').replace('{count}', this.files.length);
+                            }
+                            else if (e.target.value) {
+                                fileName = e.target.value.split('\\').pop();
+                            }
+                            if (fileName) {
+                                buttonLabel.html(fileName);
+                            }
+                            else {
+                                buttonLabel.html(buttonLabelText);
+                            }
+                        });
+                        // Firefox bug fix
+                        input.on('focus', function () { input.addClass('has-focus'); })
+                            .on('blur', function () { input.removeClass('has-focus'); });
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return FileUpload;
+        }());
+        Core.FileUpload = FileUpload;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.fileupload.js.map

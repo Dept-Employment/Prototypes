@@ -1,0 +1,165 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var EditableDisplayView = (function (_super) {
+            __extends(EditableDisplayView, _super);
+            function EditableDisplayView(element) {
+                _super.call(this, element, Core.ControlType.EditableDisplayView, {});
+            }
+            EditableDisplayView.prototype.initialise = function () {
+                this.showDisplayView();
+            };
+            Object.defineProperty(EditableDisplayView, "editHtmlDisplaying", {
+                get: function () { return "EditHtmlDisplaying"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView, "editHtmlDisplayed", {
+                get: function () { return "EditHtmlDisplayed"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView, "editEventName", {
+                get: function () { return "Edit"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView, "editCancelledEventName", {
+                get: function () { return "EditCancelled"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView, "savedEventName", {
+                get: function () { return "Saved"; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "displayView", {
+                get: function () { return $(this.element).find('[data-displayview]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "editView", {
+                get: function () { return $(this.element).find('[data-editview]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "editForm", {
+                get: function () { return $(this.element).find('[data-editform]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "resultForm", {
+                get: function () {
+                    if (this.resultFormField != null) {
+                        return this.resultFormField;
+                    }
+                    else {
+                        return this.editForm;
+                    }
+                },
+                set: function (resultForm) {
+                    this.resultFormField = resultForm;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "editButton", {
+                get: function () { return $(this.element).find('[data-editbutton]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "saveButton", {
+                get: function () { return $(this.element).find('[data-savebutton]'); },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EditableDisplayView.prototype, "cancelButton", {
+                get: function () { return $(this.element).find('[data-cancelbutton]'); },
+                enumerable: true,
+                configurable: true
+            });
+            EditableDisplayView.prototype.showDisplayView = function () {
+                var _this = this;
+                this.element.html(this.settings.displayViewHtml);
+                if (this.initialised != null) {
+                    this.element.find(':tabbable').first().focus();
+                }
+                this.editButton.click(function () { return _this.showEditView(); });
+            };
+            EditableDisplayView.prototype.showEditView = function () {
+                var _this = this;
+                $(this.element).trigger(Midas.Core.EditableDisplayView.editHtmlDisplaying);
+                this.element.html(this.settings.editViewHtml);
+                $(this.element).trigger(Midas.Core.EditableDisplayView.editHtmlDisplayed);
+                // Focus the first tabbable element. We do this after firing the edit html
+                // events so that controls can be initialised before we try to tab them.
+                this.element.find(':tabbable').first().focus();
+                this.saveButton.click(function () { return _this.save(); });
+                this.cancelButton.click(function () { return _this.cancelEdit(); });
+                var jQuery = $;
+                jQuery.validator.unobtrusive.parse(this.editForm);
+                AJSValidate.InitialiseDependentValidations(this.editForm);
+                $(this.element).trigger(Midas.Core.EditableDisplayView.editEventName);
+            };
+            EditableDisplayView.prototype.cancelEdit = function () {
+                this.showDisplayView();
+                $(this.element).trigger(Midas.Core.EditableDisplayView.editCancelledEventName);
+            };
+            EditableDisplayView.prototype.save = function () {
+                var _this = this;
+                var form = this.editForm;
+                if (form.valid()) {
+                    var data = form.serializeArray();
+                    data.push({ name: "DisplayTemplateName", value: this.settings.displayTemplateName });
+                    data.push({ name: "EditorTemplateName", value: this.settings.editorTemplateName });
+                    $.post(this.settings.update.url, data, function (updateResult) {
+                        _this.handleUpdateResult(updateResult);
+                    });
+                }
+            };
+            EditableDisplayView.prototype.handleUpdateResult = function (updateResult) {
+                if (Midas.Core.AjaxValidation.processAjaxResult(updateResult, this.resultForm[0]) && updateResult.IsRequestSuccessful) {
+                    var settings = this.settings;
+                    settings.displayViewHtml = updateResult.DisplayViewHtml;
+                    settings.editViewHtml = updateResult.EditViewHtml;
+                    this.settings = settings;
+                    this.showDisplayView();
+                    $(this.element).trigger(Midas.Core.EditableDisplayView.savedEventName, updateResult.AdditionalData);
+                }
+            };
+            EditableDisplayView.nameSpace = ".coreEditableDisplayView";
+            return EditableDisplayView;
+        }(Core.Control));
+        Core.EditableDisplayView = EditableDisplayView;
+        var EditableDisplayViewInitialiser = (function () {
+            function EditableDisplayViewInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-editabledisplayview]').each(function (index, element) {
+                        var editableDisplayView = new Midas.Core.EditableDisplayView($(element));
+                        editableDisplayView.element.on(EditableDisplayView.editHtmlDisplayed, function (e) {
+                            Midas.Core.currentPage.initialise($(e.target));
+                        });
+                        editableDisplayView.element.on(EditableDisplayView.editCancelledEventName, function (e) {
+                            Midas.Core.currentPage.initialise($(e.target));
+                        });
+                        editableDisplayView.element.on(EditableDisplayView.savedEventName, function (e) {
+                            Midas.Core.currentPage.initialise($(e.target));
+                        });
+                    });
+                };
+            }
+            return EditableDisplayViewInitialiser;
+        }());
+        Core.EditableDisplayViewInitialiser = EditableDisplayViewInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.editabledisplayview.js.map

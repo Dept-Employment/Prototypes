@@ -1,0 +1,430 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var TemplateDropDownList = (function (_super) {
+            __extends(TemplateDropDownList, _super);
+            function TemplateDropDownList(element) {
+                _super.call(this, element, Core.ControlType.TemplateDropDownList, { autoBind: true });
+            }
+            TemplateDropDownList.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                this.initialiseElement();
+                this.initialiseToggleElement();
+                this.initialiseListBoxElement();
+                this.initialiseDataSource();
+                if (this.settings.autoBind) {
+                    this.dataSource.read();
+                }
+            };
+            Object.defineProperty(TemplateDropDownList.prototype, "toggleElement", {
+                get: function () {
+                    return this.element.find('[aria-haspopup=true]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "listBoxElement", {
+                get: function () {
+                    return this.element.children('[role=listbox]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "items", {
+                get: function () {
+                    return this.listBoxElement.children();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "selectedValueElement", {
+                get: function () {
+                    return this.element.find('[name=' + this.settings.Name + ']');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "selectedTextElement", {
+                get: function () {
+                    return this.element.find('[name=' + this.settings.Name + 'Input]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "selectedIndex", {
+                get: function () {
+                    return this.selectedIndexField;
+                },
+                set: function (value) {
+                    this.selectedIndexField = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "selectedItem", {
+                get: function () {
+                    return this.items.eq(this.selectedIndex);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "focusedIndex", {
+                get: function () {
+                    return this.focusedIndexField;
+                },
+                set: function (value) {
+                    this.focusedIndexField = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(TemplateDropDownList.prototype, "isOpen", {
+                get: function () {
+                    return this.isOpenField;
+                },
+                set: function (value) {
+                    this.isOpenField = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            TemplateDropDownList.prototype.initialiseElement = function () {
+                var _this = this;
+                this.element.toggleClass("m-templatedropdownlist", true).attr("role", "listbox");
+                this.element.focusin($.proxy(function () {
+                    _this.toggleElement.toggleClass("toggle-focused", true);
+                }, this));
+                this.element.focusout($.proxy(function () {
+                    _this.toggleElement.toggleClass("toggle-focused", false);
+                    _this.toggleElement.toggleClass("validation-error", !_this.selectedValueElement.valid());
+                }, this));
+                this.element.keydown($.proxy(function (ke) {
+                    _this.keydown(ke);
+                }, this));
+                this.selectedIndex = -1;
+                this.focusedIndex = -1;
+            };
+            TemplateDropDownList.prototype.initialiseToggleElement = function () {
+                var _this = this;
+                this.isOpen = false;
+                this.toggleIsOpenCssAndAttributes();
+                this.toggleElement.attr('readonly', '');
+                this.toggleElement.click($.proxy(function (ce) {
+                    if (_this.isOpen) {
+                        _this.close(ce);
+                    }
+                    else {
+                        _this.open(ce);
+                    }
+                }, this));
+                this.document.click($.proxy(function (ce) {
+                    var target = $(ce.target);
+                    if (!target.closest(".m-items, #" + _this.toggleElement.attr('id')).length) {
+                        _this.close(ce);
+                    }
+                }, this));
+            };
+            TemplateDropDownList.prototype.initialiseListBoxElement = function () {
+                var _this = this;
+                this.listBoxElement.addClass("m-listbox");
+                this.listBoxElement.on('click', '[role=option]', $.proxy(function (ce) {
+                    var item = $(ce.currentTarget);
+                    _this.selectItem(item, ce);
+                }, this));
+                this.listBoxElement.on('mousemove', '[role=option]', $.proxy(function (me) {
+                    var item = $(me.currentTarget);
+                    _this.focusItem(item, me);
+                }, this));
+            };
+            TemplateDropDownList.prototype.open = function (event) {
+                if (this.isOpen) {
+                    return;
+                }
+                this.isOpen = true;
+                this.toggleIsOpenCssAndAttributes();
+                if (this.selectedIndex == -1) {
+                    this.focusItem(this.items.first(), event);
+                }
+                else {
+                    this.focusItem(this.selectedItem, event);
+                }
+                this.trigger(DropDownListEvent[DropDownListEvent.Open], { event: event });
+            };
+            TemplateDropDownList.prototype.close = function (event) {
+                if (!this.isOpen) {
+                    return;
+                }
+                this.isOpen = false;
+                this.toggleIsOpenCssAndAttributes();
+                this.trigger(DropDownListEvent[DropDownListEvent.Close], { event: event });
+            };
+            TemplateDropDownList.prototype.toggle = function (event) {
+                if (this.isOpen) {
+                    this.close(event);
+                }
+                else {
+                    this.open(event);
+                }
+            };
+            TemplateDropDownList.prototype.toggleIsOpenCssAndAttributes = function () {
+                this.toggleElement.attr('aria-expanded', this.isOpen.toString());
+                this.listBoxElement.attr('aria-hidden', (!this.isOpen).toString());
+                this.listBoxElement.toggleClass('hidden', !this.isOpen);
+            };
+            TemplateDropDownList.prototype.initialiseDataSource = function () {
+                if (this.dataSource && this.refreshHandler) {
+                    this.unbindDataSource();
+                }
+                else {
+                    this.refreshHandler = $.proxy(this.refresh, this);
+                    this.errorHandler = $.proxy(this.handleError, this);
+                }
+                this.dataSource = Core.TemplateDataSource.create(this.settings.dataSource);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.Change], this.refreshHandler);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.Error], this.errorHandler);
+            };
+            TemplateDropDownList.prototype.unbindDataSource = function () {
+                this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.Change], this.refreshHandler);
+                this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.Error], this.errorHandler);
+            };
+            TemplateDropDownList.prototype.handleError = function () {
+            };
+            TemplateDropDownList.prototype.dataItem = function (element) {
+                var attr = "data-uid";
+                var uid = $(element).closest("[" + attr + "]").attr(attr);
+                return this.dataSource.getByUniqueId(uid);
+            };
+            TemplateDropDownList.prototype.refresh = function (e) {
+                var idx, length;
+                e = e || new Core.EventArgs({}, {});
+                if (e.data.action === "itemchange") {
+                    return;
+                }
+                if (this.trigger(Core.DataEvents[Core.DataEvents.DataBinding], { action: e.data.action || "rebind", items: e.data.items, index: e.data.index })) {
+                    return;
+                }
+                var view = this.dataSource.view();
+                var html = "";
+                for (idx = 0, length = view.length; idx < length; idx++) {
+                    var viewItem = view[idx];
+                    if (viewItem.Html) {
+                        var itemElement = $(viewItem.Html);
+                        if (this.settings.itemCssClasses != null) {
+                            itemElement.addClass(this.settings.itemCssClasses);
+                        }
+                        else {
+                            itemElement.addClass('m-item');
+                        }
+                        if (idx == 0) {
+                            itemElement.addClass('m-firstitem');
+                        }
+                        if (idx % 2) {
+                            if (this.settings.altItemCssClasses != null) {
+                                itemElement.addClass(this.settings.altItemCssClasses);
+                            }
+                            else {
+                                itemElement.addClass('m-altitem');
+                            }
+                        }
+                        if (idx == (length - 1)) {
+                            itemElement.addClass('m-lastitem');
+                        }
+                        html += itemElement[0].outerHTML;
+                    }
+                }
+                this.items.remove();
+                this.listBoxElement.html(html);
+                for (idx = 0, length = view.length; idx < length; idx++) {
+                    this.items.eq(idx)
+                        .attr("id", view[idx].uniqueId)
+                        .attr("data-uid", view[idx].uniqueId)
+                        .attr("role", "option")
+                        .attr("aria-selected", "false")
+                        .attr("tabindex", 0)
+                        .data('index', idx);
+                }
+                this.trigger(Core.DataEvents[Core.DataEvents.DataBound]);
+            };
+            TemplateDropDownList.prototype.keydown = function (event) {
+                var preventDefault = true;
+                switch (event.keyCode) {
+                    case Core.KeyCode.Tab:
+                    case Core.KeyCode.Escape:
+                        this.close(event);
+                        preventDefault = false;
+                        break;
+                    case Core.KeyCode.Enter:
+                        if (this.isOpen) {
+                            this.selectFocusedItem(event);
+                        }
+                        break;
+                    case Core.KeyCode.Space:
+                        this.open(event);
+                        break;
+                    case Core.KeyCode.UpArrow:
+                        if (event.altKey) {
+                            this.toggle(event);
+                        }
+                        else {
+                            this.move(ListBoxMoveDirection.Previous, event);
+                        }
+                        break;
+                    case Core.KeyCode.DownArrow:
+                        if (event.altKey) {
+                            this.toggle(event);
+                        }
+                        else {
+                            this.move(ListBoxMoveDirection.Next, event);
+                        }
+                        break;
+                    case Core.KeyCode.Home:
+                        this.move(ListBoxMoveDirection.First, event);
+                        break;
+                    case Core.KeyCode.End:
+                        this.move(ListBoxMoveDirection.Last, event);
+                        break;
+                    default:
+                        preventDefault = false;
+                        break;
+                }
+                if (preventDefault) {
+                    event.preventDefault();
+                }
+            };
+            TemplateDropDownList.prototype.focusItem = function (item, event) {
+                this.items.removeClass('state-focus');
+                this.focusedIndex = item.data('index');
+                item.addClass('state-focus');
+                item.focus();
+                this.trigger(DropDownListEvent[DropDownListEvent.Focus], { event: event, item: item });
+                if (!this.isOpen) {
+                    this.selectItem(item, null);
+                }
+            };
+            TemplateDropDownList.prototype.selectItem = function (item, event) {
+                var oldSelectedIndex = this.selectedIndex;
+                var dataItem = this.dataItem(item);
+                var value = dataItem[this.settings.dataValueField];
+                var text = dataItem[this.settings.dataTextField];
+                this.selectedIndex = item.data('index');
+                this.selectedValueElement.val(value);
+                this.selectedTextElement.val(text);
+                this.setSelectedItemAriaValues(item);
+                this.close(event);
+                this.toggleElement.focus();
+                this.trigger(DropDownListEvent[DropDownListEvent.Select], { event: event, item: item });
+                if (this.selectedIndex != oldSelectedIndex) {
+                    this.trigger(DropDownListEvent[DropDownListEvent.Change], { event: event, item: item });
+                }
+            };
+            TemplateDropDownList.prototype.selectFocusedItem = function (event) {
+                var item = this.items.eq(this.focusedIndex);
+                if (item.length) {
+                    this.selectItem(item, event);
+                }
+            };
+            TemplateDropDownList.prototype.move = function (direction, event) {
+                var item, newItem;
+                if (this.isOpen) {
+                    if (this.focusedIndex == -1) {
+                        item = this.items.first();
+                        newItem = item;
+                    }
+                    else {
+                        item = this.items.eq(this.focusedIndex);
+                    }
+                }
+                else {
+                    if (this.selectedIndex == -1) {
+                        item = this.items.first();
+                        newItem = item;
+                    }
+                    else {
+                        item = this.items.eq(this.selectedIndex);
+                    }
+                }
+                if (newItem == null) {
+                    switch (direction) {
+                        case ListBoxMoveDirection.First:
+                            newItem = this.items.first();
+                            break;
+                        case ListBoxMoveDirection.Last:
+                            newItem = this.items.last();
+                            break;
+                        case ListBoxMoveDirection.Previous:
+                            newItem = item.prevAll().eq(0);
+                            break;
+                        case ListBoxMoveDirection.Next:
+                            newItem = item.nextAll().eq(0);
+                            break;
+                        default:
+                            return;
+                    }
+                }
+                if (newItem != null && newItem.length) {
+                    this.focusItem(newItem, event);
+                }
+            };
+            TemplateDropDownList.prototype.setSelectedItemAriaValues = function (item) {
+                var id = item.attr('id');
+                this.toggleElement.attr("aria-activedescendant", id);
+                this.listBoxElement.attr("aria-activedescendant", id);
+                this.items.attr('aria-selected', false.toString());
+                item.attr('aria-selected', true.toString());
+            };
+            TemplateDropDownList.prototype.modelFromElement = function (element) {
+                var uid = element.attr("data-uid");
+                return this.dataSource.getByUniqueId(uid);
+            };
+            TemplateDropDownList.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.unbindDataSource();
+                this.element.off(TemplateDropDownList.nameSpace);
+            };
+            TemplateDropDownList.nameSpace = ".templateDropDownList";
+            return TemplateDropDownList;
+        }(Core.DataBoundControl));
+        Core.TemplateDropDownList = TemplateDropDownList;
+        (function (ListBoxMoveDirection) {
+            ListBoxMoveDirection[ListBoxMoveDirection["Previous"] = 0] = "Previous";
+            ListBoxMoveDirection[ListBoxMoveDirection["Next"] = 1] = "Next";
+            ListBoxMoveDirection[ListBoxMoveDirection["First"] = 2] = "First";
+            ListBoxMoveDirection[ListBoxMoveDirection["Last"] = 3] = "Last";
+        })(Core.ListBoxMoveDirection || (Core.ListBoxMoveDirection = {}));
+        var ListBoxMoveDirection = Core.ListBoxMoveDirection;
+        (function (DropDownListEvent) {
+            DropDownListEvent[DropDownListEvent["Open"] = 0] = "Open";
+            DropDownListEvent[DropDownListEvent["Close"] = 1] = "Close";
+            DropDownListEvent[DropDownListEvent["Focus"] = 2] = "Focus";
+            DropDownListEvent[DropDownListEvent["Select"] = 3] = "Select";
+            DropDownListEvent[DropDownListEvent["Change"] = 4] = "Change";
+        })(Core.DropDownListEvent || (Core.DropDownListEvent = {}));
+        var DropDownListEvent = Core.DropDownListEvent;
+        var TemplateDropDownListInitialiser = (function () {
+            function TemplateDropDownListInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-templatedropdownlist]').each(function (index, element) {
+                        var listBox = new TemplateDropDownList($(element));
+                        listBox.bind(Midas.Core.DataEvents[Midas.Core.DataEvents.DataBound], function (e) {
+                            Midas.Core.currentPage.initialise($(e.sender.element));
+                        });
+                    });
+                };
+            }
+            return TemplateDropDownListInitialiser;
+        }());
+        Core.TemplateDropDownListInitialiser = TemplateDropDownListInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.TemplateDropDownListInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.templatedropdownlist.js.map

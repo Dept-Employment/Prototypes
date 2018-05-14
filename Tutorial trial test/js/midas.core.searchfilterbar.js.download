@@ -1,0 +1,410 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SearchFilterBar = (function (_super) {
+            __extends(SearchFilterBar, _super);
+            function SearchFilterBar(element) {
+                _super.call(this, element, Core.ControlType.SearchFilterBar, {
+                    targetControlId: null
+                });
+            }
+            SearchFilterBar.prototype.initialise = function () {
+                if (this.settings.targetControlId != null) {
+                    var targetControl = $('#' + this.settings.targetControlId).getDataBoundControl();
+                    if (targetControl != null && targetControl.dataSource != null) {
+                        this.targetControl = targetControl;
+                    }
+                }
+                if (this.settings.targetSearchBarId != null) {
+                    var targetSearchBar = $('#' + this.settings.targetSearchBarId).getSearchBar();
+                    if (targetSearchBar != null) {
+                        this.targetSearchBar = targetSearchBar;
+                    }
+                }
+                this.initialiseElement();
+                this.initialiseFilters();
+                this.createSearchRequestData();
+            };
+            Object.defineProperty(SearchFilterBar.prototype, "targetControl", {
+                get: function () {
+                    return this.targetControlInternal;
+                },
+                set: function (value) {
+                    this.targetControlInternal = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "targetSearchBar", {
+                get: function () {
+                    return this.targetSearchBarInternal;
+                },
+                set: function (value) {
+                    this.targetSearchBarInternal = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "searchRequestData", {
+                get: function () {
+                    return this.searchRequestDataInternal;
+                },
+                set: function (value) {
+                    this.searchRequestDataInternal = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "form", {
+                get: function () {
+                    return this.element.find('form');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "filtersHtml", {
+                get: function () {
+                    return this.element.find('[data-filters-html]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "filtersTags", {
+                get: function () {
+                    return this.element.find('[data-filters-tags]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchFilterBar.prototype, "filtersEmptyView", {
+                get: function () {
+                    return this.element.find('[data-filters-emptyview]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            SearchFilterBar.prototype.initialiseElement = function () {
+                this.element.addClass("m-searchfilterbar");
+            };
+            SearchFilterBar.prototype.initialiseFilters = function () {
+                var _this = this;
+                var form = this.element.find('form');
+                // Display any filters that are present on initial load.
+                if (this.settings.searchFilters != null) {
+                    for (var filterData in this.settings.searchFilters) {
+                        var filter = this.settings.searchFilters[filterData];
+                        if (!filter.IsMultiSelect) {
+                            for (var itemData in filter.FilterItems) {
+                                var item = filter.FilterItems[itemData];
+                                if (item.Selected) {
+                                    form.append($('<input>').attr({
+                                        type: 'hidden',
+                                        name: filter.SearchModelFieldName,
+                                        value: item.Value,
+                                        'data-filter': '',
+                                        'data-filter-name': filter.SearchModelFieldName,
+                                        'data-filter-value': item.Value,
+                                        'data-filter-text': item.DisplayText,
+                                        'data-filter-parentfilterid': filter.ParentFilterId
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+                this.refreshFilterTags();
+                if (this.targetControl != null) {
+                    this.element.on("click" + SearchFilterBar.nameSpace, "[data-filter-add]", $.proxy(function (e) {
+                        e.preventDefault();
+                        var target = $(e.currentTarget);
+                        var filterName = target.data('filter-name');
+                        var filterValue = target.data('filter-value');
+                        var filterText = target.data('filter-text');
+                        var filterParentFilterId = target.closest('[data-filter-panel]').data('filter-parentfilterid');
+                        var filterInput = form.find('input[name=' + filterName + ']');
+                        if (filterInput.length) {
+                            filterInput.val(filterValue);
+                            filterInput.data('filter-name', filterName);
+                            filterInput.data('filter-value', filterValue);
+                            filterInput.data('filter-text', filterText);
+                            filterInput.data('filter-parentfilterid', filterParentFilterId);
+                        }
+                        else {
+                            form.append($('<input>').attr({
+                                type: 'hidden',
+                                name: filterName,
+                                value: filterValue,
+                                'data-filter': '',
+                                'data-filter-name': filterName,
+                                'data-filter-value': filterValue,
+                                'data-filter-text': filterText,
+                                'data-filter-parentfilterid': filterParentFilterId
+                            }));
+                        }
+                        _this.addedFilterName = filterName;
+                        // Find any dependent filters and remove those as a new parent value was selected.
+                        _this.element.find('[data-filter-remove][data-filter-parentfilterid=' + filterName + ']').each(function (index, dependentFilter) {
+                            var dependentFilterName = $(dependentFilter).data('filter-name');
+                            var dependentFilterInput = form.find('input[name=' + dependentFilterName + ']');
+                            dependentFilterInput.remove();
+                        });
+                        // Find any dependent filter panels.
+                        var dependentFilterPanels = _this.element.find('[data-filter-panel][data-filter-parentfilterid=' + filterName + ']');
+                        if (dependentFilterPanels.length > 0) {
+                            // Hide the filter panel with dependent filters.
+                            var filterPanelSelector = '#' + filterName + 'Panel';
+                            $(filterPanelSelector).collapse('hide');
+                        }
+                        dependentFilterPanels.each(function (index, dependentFilter) {
+                            // Hide the dependent filter panels while we retrieve new items.
+                            var dependentFilterName = $(dependentFilter).data('filter-id');
+                            var dependentFilterPanelSelector = '#' + dependentFilterName + 'Panel';
+                            $(dependentFilterPanelSelector).collapse('hide');
+                        });
+                        if (_this.targetSearchBar != null) {
+                            _this.targetSearchBar.createSearchRequestData();
+                        }
+                        _this.refreshFilterTags();
+                        _this.refreshTargetControl();
+                        _this.createHistoryItem();
+                    }, this));
+                    this.element.on("click" + SearchFilterBar.nameSpace, "[data-filter-remove]", $.proxy(function (e) {
+                        e.preventDefault();
+                        var target = $(e.currentTarget);
+                        var filterName = target.data('filter-name');
+                        var filterInput = form.find('input[name=' + filterName + ']');
+                        if (filterInput.length) {
+                            filterInput.remove();
+                            // Find any dependent filters and remove those as well.
+                            _this.element.find('[data-filter-remove][data-filter-parentfilterid=' + filterName + ']').each(function (index, dependentFilter) {
+                                var dependentFilterName = $(dependentFilter).data('filter-name');
+                                var dependentFilterInput = form.find('input[name=' + dependentFilterName + ']');
+                                dependentFilterInput.remove();
+                            });
+                            // Find any dependent filter panels and hide them.
+                            _this.element.find('[data-filter-panel][data-filter-parentfilterid=' + filterName + ']').each(function (index, dependentFilter) {
+                                var dependentFilterName = $(dependentFilter).data('filter-id');
+                                var dependentFilterPanelSelector = '#' + dependentFilterName + 'Panel';
+                                $(dependentFilterPanelSelector).collapse('hide');
+                                $(dependentFilter).toggleClass('hidden', true);
+                            });
+                        }
+                        else {
+                            if (_this.targetSearchBar != null) {
+                                _this.targetSearchBar.removeFilter(filterName);
+                            }
+                        }
+                        _this.refreshFilterTags();
+                        _this.refreshTargetControl();
+                        _this.createHistoryItem();
+                    }, this));
+                    this.element.on("click" + SearchFilterBar.nameSpace, "[data-filter-multi]", $.proxy(function (e) {
+                        if (_this.targetSearchBar != null) {
+                            _this.targetSearchBar.createSearchRequestData();
+                        }
+                        _this.refreshTargetControl();
+                        _this.createHistoryItem();
+                    }, this));
+                    this.targetControl.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.RequestStarting], function (e) {
+                        if (e.data.type === Core.DataRequestType[Core.DataRequestType.Read] && _this.searchRequestData != null) {
+                            // We attach the search request data here rather than the click handler of a filter option
+                            // so that the data is also attached when paging, filtering or sorting the data bound control.
+                            $.extend(true, e.data.data, _this.searchRequestData);
+                        }
+                    });
+                    this.targetControl.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.RequestEnded], function (e) {
+                        if (e.data.type === Core.DataRequestType[Core.DataRequestType.Read]) {
+                            if (e.data.data.SearchFilters != null) {
+                                _this.updateFilters(e.data.data.SearchFilters);
+                            }
+                        }
+                    });
+                }
+                if (this.targetSearchBar != null) {
+                    this.targetSearchBar.bind(Core.SearchBarEvents[Core.SearchBarEvents.Search], function () {
+                        _this.refreshFilterTags();
+                        _this.createHistoryItem();
+                    });
+                }
+            };
+            SearchFilterBar.prototype.resetFilters = function () {
+                this.element.find('[data-filter]').remove();
+                this.element.find('[data-filter-multi]').prop('checked', false);
+                this.refreshFilterTags();
+                this.refreshTargetControl();
+                this.createHistoryItem();
+            };
+            SearchFilterBar.prototype.createHistoryItem = function () {
+                var form = this.element.find('form');
+                var filters = $.merge(this.targetSearchBar.getFilters(false), form.serializeArray());
+                var filtersUrl = "?";
+                for (var filterItem in filters) {
+                    var filter = filters[filterItem];
+                    if (filtersUrl != "?") {
+                        filtersUrl += "&";
+                    }
+                    filtersUrl += filter.name + "=" + filter.value;
+                }
+                window.history.pushState({}, "Search Results", filtersUrl);
+            };
+            SearchFilterBar.prototype.refreshTargetControl = function () {
+                this.createSearchRequestData();
+                this.targetControl.dataSource.filter(null);
+            };
+            SearchFilterBar.prototype.createSearchRequestData = function () {
+                // We create the search request data here but it is attached in the request starting event of the
+                // data source so that it can be attached to the request data for all reads including when paging,
+                // filtering or sorting the data bound control.
+                this.searchRequestData = this.form.serializeObject();
+            };
+            SearchFilterBar.prototype.refreshFilterTags = function () {
+                var _this = this;
+                this.filtersTags.empty();
+                var filterTag;
+                if (this.targetSearchBar != null) {
+                    var filters = this.targetSearchBar.getFilters(true);
+                    for (var filterName in filters) {
+                        var filter = filters[filterName];
+                        filterTag = $('<span>').attr({
+                            'data-filter-remove': '',
+                            'data-filter-name': '"' + filter.name + '"',
+                            'data-filter-value': filter.value,
+                            'class': 'label label-default inline-block'
+                        });
+                        filterTag.html(filter.text);
+                        filterTag.append($('<a>').attr({
+                            'href': '#',
+                            'class': 'fa fa-times'
+                        }));
+                        this.filtersTags.append(filterTag);
+                    }
+                }
+                this.element.find('[data-filter]').each(function (index, element) {
+                    var targetElement = $(element);
+                    var filterName = targetElement.data('filter-name');
+                    var filterValue = targetElement.val();
+                    var filterText = targetElement.data('filter-text');
+                    var filterParentFilterId = targetElement.data('filter-parentfilterid');
+                    filterTag = $('<span>').attr({
+                        'data-filter-remove': '',
+                        'data-filter-name': filterName,
+                        'data-filter-value': filterValue,
+                        'data-filter-parentfilterid': filterParentFilterId,
+                        'class': 'label label-default'
+                    });
+                    filterTag.html(filterText);
+                    filterTag.append($('<a>').attr({
+                        'href': '#',
+                        'class': 'fa fa-times'
+                    }));
+                    _this.filtersTags.append(filterTag);
+                });
+                if (this.filtersTags.children().length == 0) {
+                    this.filtersEmptyView.toggleClass('hidden', false);
+                }
+                else {
+                    this.filtersEmptyView.toggleClass('hidden', true);
+                }
+            };
+            SearchFilterBar.prototype.updateFilters = function (searchFilters) {
+                var _this = this;
+                for (var filterData in searchFilters) {
+                    var filter = searchFilters[filterData];
+                    var prevFilterElement = null;
+                    var filterHeadingSelector = '#' + filter.FilterId + 'Heading';
+                    var filterPanelSelector = '#' + filter.FilterId + 'Panel';
+                    var filterNameElements = this.filtersHtml.find(filterPanelSelector).find('[data-filter-name]');
+                    filterNameElements.removeAttr('data-filter-keep');
+                    for (var itemData in filter.FilterItems) {
+                        var item = filter.FilterItems[itemData];
+                        var itemFilterElement = this.filtersHtml.find('[data-filter-name=' + filter.SearchModelFieldName + '][data-filter-value=' + item.Value + ']');
+                        if (item.Value == null) {
+                            itemFilterElement = this.filtersHtml.find('[data-filter-name=' + filter.SearchModelFieldName + '][data-filter-value=""]');
+                        }
+                        prevFilterElement = itemFilterElement;
+                        if (itemFilterElement.length > 0) {
+                            itemFilterElement.nextAll('.badge').text(item.ItemCount);
+                            itemFilterElement.attr({ 'data-filter-keep': '' });
+                        }
+                        else if (prevFilterElement !== null) {
+                            $(filterPanelSelector + ' > UL.list-group').append(function () {
+                                var itemTemplate = '<li class="list-group-item">' +
+                                    '<a href="#" title="Location"> ' +
+                                    '<span class="sr-only">Filter to</span>' +
+                                    item.CodeDescription +
+                                    '</a>' +
+                                    '</li>';
+                                var itemElement = $(itemTemplate);
+                                itemElement
+                                    .find('a')
+                                    .attr({
+                                    'data-filters-html': '',
+                                    'data-filter-add': '',
+                                    'data-filter-name': filter.SearchModelFieldName,
+                                    'data-filter-value': item.Value,
+                                    'data-filter-text': item.DisplayText,
+                                    'data-filter-keep': ''
+                                })
+                                    .after(function () {
+                                    return '<span class="badge pull-right" >' + item.ItemCount + '</span>';
+                                });
+                                return itemElement;
+                            });
+                        }
+                    }
+                    $('[data-filter-panel][data-filter-id=' + filter.FilterId + ']').toggleClass('hidden', filter.FilterItems.length === 0);
+                }
+                this.filtersHtml.find('[data-filter-name]').not('[data-filter-keep]').parent().remove();
+                if (this.addedFilterName != null) {
+                    // Find any dependent filter panels and show them.
+                    this.element.find('[data-filter-panel][data-filter-parentfilterid=' + this.addedFilterName + ']').each(function (index, dependentFilter) {
+                        var dependentFilterName = $(dependentFilter).data('filter-id');
+                        var dependentFilterPanelSelector = '#' + dependentFilterName + 'Panel';
+                        _this.showFilterPanel(dependentFilterPanelSelector);
+                    });
+                }
+                this.addedFilterName = null;
+            };
+            SearchFilterBar.prototype.showFilterPanel = function (filterPanelSelector) {
+                var _this = this;
+                if ($(filterPanelSelector).hasClass('collapsing')) {
+                    setTimeout(function () {
+                        _this.showFilterPanel(filterPanelSelector);
+                    }, 100);
+                }
+                $(filterPanelSelector).collapse('show');
+            };
+            SearchFilterBar.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.element.off(SearchFilterBar.nameSpace);
+            };
+            SearchFilterBar.nameSpace = ".coreSearchFilterBar";
+            return SearchFilterBar;
+        }(Core.Control));
+        Core.SearchFilterBar = SearchFilterBar;
+        var SearchFilterBarInitialiser = (function () {
+            function SearchFilterBarInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-searchfilterbar]').each(function (index, element) {
+                        var searchFilterBarElement = $(element);
+                        var searchFilterBar = new SearchFilterBar(searchFilterBarElement);
+                    });
+                };
+            }
+            return SearchFilterBarInitialiser;
+        }());
+        Core.SearchFilterBarInitialiser = SearchFilterBarInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.SearchFilterBarInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.searchfilterbar.js.map

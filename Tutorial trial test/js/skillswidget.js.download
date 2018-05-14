@@ -1,0 +1,66 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var JobSeekerSkillsWidgetItem = (function (_super) {
+            __extends(JobSeekerSkillsWidgetItem, _super);
+            function JobSeekerSkillsWidgetItem() {
+                _super.apply(this, arguments);
+                this.clickSubmitButton = function (ce) {
+                    ce.preventDefault();
+                    var location = $("#GeoLocation").val();
+                    var occupation = $("#MySkillsKeyword").val();
+                    $.ajax({
+                        url: "https://ws.myskills.gov.au/location",
+                        data: { value: location, pageSize: 10 }
+                    })
+                        .done(function (data) {
+                        var hrefTrainingCourses = "https://www.myskills.gov.au/Courses/Search";
+                        var trainingLocation = "";
+                        if (data !== null && data.length > 0) {
+                            if (location.length > 0) {
+                                for (var i = 0; i < data.length; i++) {
+                                    if (location.indexOf(data[i].DisplayName) > -1)
+                                        trainingLocation = data[i].AustralianLocationId;
+                                }
+                            }
+                            if (trainingLocation.length === 0) {
+                                trainingLocation = data[0].AustralianLocationId;
+                            }
+                            hrefTrainingCourses = "https://www.myskills.gov.au/Courses/Search?LocationId=" +
+                                trainingLocation +
+                                "&keywords=" +
+                                occupation +
+                                "&distance=25";
+                        }
+                        window.open(hrefTrainingCourses, "_blank");
+                    });
+                };
+            }
+            JobSeekerSkillsWidgetItem.prototype.initialise = function () {
+                var _this = this;
+                _super.prototype.initialise.call(this);
+                $("button.mySkillsSubmitButton").on('click', function (ce) {
+                    _this.clickSubmitButton(ce);
+                });
+            };
+            return JobSeekerSkillsWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.JobSeekerSkillsWidgetItem = JobSeekerSkillsWidgetItem;
+        var JobSeekerSkillsWidgetItemInitialiser = (function () {
+            function JobSeekerSkillsWidgetItemInitialiser() {
+            }
+            JobSeekerSkillsWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new JobSeekerSkillsWidgetItem(widgetItemElement);
+            };
+            return JobSeekerSkillsWidgetItemInitialiser;
+        }());
+        Widgets.JobSeekerSkillsWidgetItemInitialiser = JobSeekerSkillsWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=SkillsWidget.js.map

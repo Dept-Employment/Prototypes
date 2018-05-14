@@ -1,0 +1,69 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SearchResultStatsBar = (function (_super) {
+            __extends(SearchResultStatsBar, _super);
+            function SearchResultStatsBar(element) {
+                _super.call(this, element, Core.ControlType.SearchResultStatsBar, {
+                    targetControlId: null
+                });
+            }
+            SearchResultStatsBar.prototype.initialise = function () {
+                var _this = this;
+                this.initialiseElement();
+                this.targetControl.bind(Core.DataEvents[Core.DataEvents.DataBinding], function (e) {
+                    _this.resultsCountElement.text(e.sender.dataSource.total);
+                });
+                this.resultsCountElement.text(this.targetControl.dataSource.total);
+            };
+            Object.defineProperty(SearchResultStatsBar.prototype, "targetControl", {
+                get: function () {
+                    return $('#' + this.settings.targetControlId).getDataBoundControl();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SearchResultStatsBar.prototype, "resultsCountElement", {
+                get: function () {
+                    return this.element.find("[data-resultscount]");
+                },
+                enumerable: true,
+                configurable: true
+            });
+            SearchResultStatsBar.prototype.initialiseElement = function () {
+                this.element.addClass("m-searchresultstatsbar");
+            };
+            SearchResultStatsBar.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.element.off(SearchResultStatsBar.nameSpace);
+            };
+            SearchResultStatsBar.nameSpace = ".coreSearchResultStatsBar";
+            return SearchResultStatsBar;
+        }(Core.Control));
+        Core.SearchResultStatsBar = SearchResultStatsBar;
+        var SearchResultStatsBarInitialiser = (function () {
+            function SearchResultStatsBarInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-searchresultstatsbar]').each(function (index, element) {
+                        var searchResultStatsBarElement = $(element);
+                        var searchResultStatsBar = new SearchResultStatsBar(searchResultStatsBarElement);
+                    });
+                };
+            }
+            return SearchResultStatsBarInitialiser;
+        }());
+        Core.SearchResultStatsBarInitialiser = SearchResultStatsBarInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.SearchResultStatsBarInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.searchresultstatsbar.js.map

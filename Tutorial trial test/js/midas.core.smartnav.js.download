@@ -1,0 +1,90 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SmartNav = (function (_super) {
+            __extends(SmartNav, _super);
+            function SmartNav(element) {
+                _super.call(this, element, Core.ControlType.SmartNav, {});
+            }
+            SmartNav.prototype.initialise = function () {
+                var _this = this;
+                //Scan DOM for primary nav sections
+                var headers = $('[data-smartnav-section="true"]').not("[data-smartnav-parentsection]");
+                //Add sections to nav
+                if (headers.length > 0) {
+                    //Add the parent tag
+                    this.element.append("<ul data-smartnav-nav='true' class='nav smartnav'></ul>");
+                    headers.each(function (index, e) {
+                        //Give every h element a unique id if it doesn't already have one
+                        $(e).uniqueId();
+                        //Build  
+                        var str = "";
+                        var childElements = $("[data-smartnav-parentsection=\"" + $(e).attr("id") + "\"]");
+                        if (childElements.length > 0) {
+                            var sublistitems = "";
+                            childElements.each(function (index, e) {
+                                $(e).uniqueId();
+                                sublistitems = sublistitems.concat("<li>" + _this.getAnchorTag(e) + "</li>");
+                            });
+                            str = "<li>" + _this.getAnchorTag(e) + "<ul class='nav'>" + sublistitems + "</ul></li>";
+                        }
+                        else {
+                            str = "<li>" + _this.getAnchorTag(e) + "</li>";
+                        }
+                        //Append
+                        _this.element.find("[data-smartnav-nav]").append(str);
+                    });
+                }
+            };
+            SmartNav.prototype.getAnchorTag = function (element) {
+                return "<a href='#" + $(element).attr("id") + "'>" + this.getIconTag(element) + this.getTitleText(element) + "</a>";
+            };
+            SmartNav.prototype.getTitleText = function (element) {
+                var t;
+                if (element.hasAttribute("data-smartnav-sectiontitle")) {
+                    t = $(element).attr("data-smartnav-sectiontitle");
+                }
+                else {
+                    t = $(element).text();
+                }
+                return t;
+            };
+            SmartNav.prototype.getIconTag = function (element) {
+                var t = "";
+                if (element.hasAttribute("data-smartnav-iconclass")) {
+                    t = "<i class='fa fa-lg " + $(element).attr("data-smartnav-iconclass") + " hidden-xs'></i> ";
+                }
+                return t;
+            };
+            return SmartNav;
+        }(Core.Control));
+        Core.SmartNav = SmartNav;
+        var SmartNavInitialiser = (function () {
+            function SmartNavInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    _this.initialise($(document));
+                    $("body")
+                        .scrollspy({
+                        target: ".smartnavbar"
+                    });
+                };
+            }
+            SmartNavInitialiser.prototype.initialise = function (container) {
+                container.find("[data-smartnav]")
+                    .each(function (index, element) {
+                    var list = new SmartNav($(element));
+                });
+            };
+            return SmartNavInitialiser;
+        }());
+        Core.SmartNavInitialiser = SmartNavInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.smartnav.js.map

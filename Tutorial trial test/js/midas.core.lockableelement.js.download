@@ -1,0 +1,118 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="typings/jquery.pnotify/jquery.pnotify.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var LockableElement = /** @class */ (function () {
+            function LockableElement(element) {
+                this.element = element;
+                this.delay = this.tryGetNumber(element.attr('data-lockable-delay'), 5);
+                this.attempts = this.tryGetNumber(element.attr('data-lockable-attempts'), 3);
+            }
+            LockableElement.prototype.initialise = function (container) {
+            };
+            LockableElement.prototype.ready = function () {
+                this.isReady = true;
+                this.messagePosted = false;
+                this.lock();
+                this.check();
+            };
+            LockableElement.prototype.unlock = function () {
+                this.element.removeClass('locked-element');
+                this.element.find('input, textarea').removeProp('readonly');
+                this.element.find('[type="checkbox"]').removeProp('disabled');
+                this.element.find('[data-datepicker="true"]').each(function (index, elem) {
+                    $(elem).datepicker("option", "showOn", "both");
+                });
+                this.clearInfoMessages();
+            };
+            LockableElement.prototype.lock = function () {
+                this.element.addClass('locked-element');
+                this.element.find('input, textarea').not('[data-datepicker="true"]').prop('readonly', 'true');
+                this.element.find('[type="checkbox"]').prop('disabled', 'true');
+                this.element.find('[data-datepicker="true"]').each(function (index, elem) {
+                    $(elem).datepicker("option", "showOn", "off"); //Hide date picker
+                });
+            };
+            LockableElement.prototype.addInfoMessage = function (m) {
+                var summary = $(document).find('[data-summary-information]').first();
+                if (summary.length) {
+                    var data = '<li>' + m + '</li>';
+                    summary.find("ul").append(data);
+                    summary.toggleClass("hidden", false);
+                }
+                this.messagePosted = true;
+            };
+            LockableElement.prototype.clearInfoMessages = function () {
+                var summaryElement = $('[data-summary-information]');
+                summaryElement.toggleClass("hidden", true);
+                summaryElement.find("ul").html("");
+                this.messagePosted = false;
+            };
+            LockableElement.prototype.start = function () {
+                var _this = this;
+                if (this.isReady) {
+                    this.registeredTimeout = setTimeout(function () {
+                        _this.check();
+                    }, this.delay * 1000);
+                }
+            };
+            LockableElement.prototype.check = function () {
+                var _this = this;
+                //stop
+                if (this.registeredTimeout != null) {
+                    clearTimeout(this.registeredTimeout);
+                }
+                //check
+                $.get(this.element.attr('data-lockable-action').valueOf(), function (response, status) {
+                    var form = _this.element.closest('form');
+                    if (status === "success") {
+                        if (response.Status != null && !Core.AjaxValidation.processAjaxResult(response, form[0])) {
+                            return;
+                        }
+                        if (response.locked === false) {
+                            //unlock
+                            _this.unlock();
+                        }
+                        else {
+                            _this.attempts = _this.attempts - 1;
+                            if (_this.attempts >= 0) {
+                                //restart
+                                if (!_this.messagePosted) {
+                                    _this.addInfoMessage('You have a pending request for this record.');
+                                }
+                                _this.start();
+                            }
+                        }
+                    }
+                    else {
+                        Midas.Core.currentPage.showGenericErrorModal();
+                    }
+                }, "json");
+            };
+            LockableElement.prototype.tryGetNumber = function (s, defaultNumber) {
+                return Number(s) ? Number(s) : defaultNumber;
+            };
+            return LockableElement;
+        }());
+        Core.LockableElement = LockableElement;
+        var LockableElementInitialiser = /** @class */ (function () {
+            function LockableElementInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            LockableElementInitialiser.prototype.initialise = function (container) {
+                container.find('[data-lockable]').each(function (index, element) {
+                    var list = new LockableElement($(element));
+                });
+            };
+            return LockableElementInitialiser;
+        }());
+        Core.LockableElementInitialiser = LockableElementInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.LockableElement.js.map

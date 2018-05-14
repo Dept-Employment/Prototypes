@@ -1,0 +1,34 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Settings = (function () {
+            function Settings(employerLogin, role, baseUrl, highConstrastCssUrl, isEligibleForInternship, contracts) {
+                var _this = this;
+                this.isJobseeker = function () {
+                    return _this.isPublicJobSeeker() || _this.isPrivateJobSeeker();
+                };
+                this.isPublicJobSeeker = function () {
+                    return _this.role === 2;
+                };
+                this.isPrivateJobSeeker = function () {
+                    return _this.role === 4;
+                };
+                this.isEmployer = function () {
+                    return _this.role === 8;
+                };
+                this.employerLogin = employerLogin;
+                this.role = role;
+                this.baseUrl = baseUrl;
+                this.highContrastCssUrl = highConstrastCssUrl;
+                this.isEligibleForInternship = isEligibleForInternship;
+                this.contracts = contracts;
+            }
+            return Settings;
+        }());
+        Core.Settings = Settings;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.Settings.js.map

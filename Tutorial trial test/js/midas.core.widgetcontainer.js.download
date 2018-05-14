@@ -1,0 +1,261 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var WidgetContainer = (function (_super) {
+            __extends(WidgetContainer, _super);
+            function WidgetContainer(element) {
+                _super.call(this, element, Core.ControlType.WidgetContainer, {});
+            }
+            WidgetContainer.prototype.initialise = function () {
+                var _this = this;
+                this.initialiseElement();
+                this.initialiseSortableContainer();
+                this.initialiseWidgetItems();
+                this.addWidgetItemsButton.click(function (ce) {
+                    $.get(_this.settings.createWidgetItems.url, {}, function (result) {
+                        var createWidgetItemsContainer = $(result.AdditionalData);
+                        _this.element.append(createWidgetItemsContainer);
+                        Midas.Core.currentPage.initialise(createWidgetItemsContainer);
+                        var modal = createWidgetItemsContainer.find('.modal').getModal();
+                        modal.element.modal('show');
+                        modal.ajaxSubmitButton.click(function () {
+                            var form = createWidgetItemsContainer.find('form');
+                            var formData = form.serializeArray();
+                            $.post(_this.settings.createWidgetItems.url, formData, function (createResult) {
+                                if (Midas.Core.AjaxValidation.processAjaxResult(createResult, form[0])) {
+                                    modal.element.modal('hide');
+                                    $.each(createResult.AdditionalData, function (index, widgetItemHtml) {
+                                        var sortableItem = _this.sortableContainer.addSortableItem($(widgetItemHtml));
+                                        var widgetItem = _this.initialiseWidgetItem(sortableItem.element);
+                                        _this.bindWidgetEventDependencies(widgetItem, true);
+                                    });
+                                    _this.emptyView.toggleClass("hidden", _this.widgetItems.length !== 0);
+                                }
+                            });
+                        });
+                        modal.element.on('hide.bs.modal', function () {
+                            _this.addWidgetItemsButton.focus();
+                        });
+                        modal.element.on('hidden.bs.modal', function () {
+                            createWidgetItemsContainer.remove();
+                        });
+                    });
+                });
+                this.sortableContainer.element.on('click', '[data-removebutton]', function (ce) {
+                    var removeButton = $(ce.currentTarget);
+                    var widgetItemElement = _this.getWidgetItemElement(removeButton);
+                    if (widgetItemElement.length) {
+                        ce.preventDefault();
+                        var widgetItem = widgetItemElement.getWidgetItem();
+                        var request = {
+                            WidgetItemId: widgetItem.id,
+                            Version: widgetItem.version
+                        };
+                        $.post(_this.settings.deleteWidgetItem.url, request, function (result) {
+                            var success = Core.AjaxValidation.processAjaxResult(result, _this.form[0]);
+                            if (success) {
+                                _this.unbindWidgetEventDependencies(widgetItem);
+                                _this.sortableContainer.removeSortableItem(_this.sortableContainer.getSortableItemElement(widgetItemElement));
+                                _this.widgetItems.splice(_this.widgetItems.indexOf(widgetItem), 1);
+                                widgetItem.destroy();
+                                _this.addWidgetItemsButton.focus();
+                                _this.emptyView.toggleClass("hidden", _this.widgetItems.length !== 0);
+                            }
+                        });
+                    }
+                });
+            };
+            Object.defineProperty(WidgetContainer.prototype, "sortableContainer", {
+                get: function () {
+                    return this.element.find('[data-sortablecontainer]').getSortableContainer();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetContainer.prototype, "addWidgetItemsButton", {
+                get: function () {
+                    return this.element.find('[data-additembutton]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetContainer.prototype, "form", {
+                get: function () {
+                    return this.element.find('form').first();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetContainer.prototype, "emptyView", {
+                get: function () {
+                    return this.element.find('[data-emptyview]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetContainer.prototype, "widgetItems", {
+                get: function () {
+                    return this._widgetItems;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            WidgetContainer.prototype.getWidgetItemElement = function (element) {
+                return element.closest('[data-widgetitem]');
+            };
+            WidgetContainer.prototype.initialiseElement = function () {
+                this.element.toggleClass('m-widgetcontainer', true);
+                var jQuery = $;
+                jQuery.validator.unobtrusive.parse(this.form);
+                AJSValidate.InitialiseDependentValidations(this.form);
+            };
+            WidgetContainer.prototype.initialiseSortableContainer = function () {
+            };
+            WidgetContainer.prototype.initialiseWidgetItems = function () {
+                var _this = this;
+                this._widgetItems = new Array();
+                this.sortableContainer.sortableItemElements.each(function (index, sortableItemElement) {
+                    _this.initialiseWidgetItem($(sortableItemElement));
+                });
+                for (var _i = 0, _a = this.widgetItems; _i < _a.length; _i++) {
+                    var widgetItem = _a[_i];
+                    // Since we are looping through each widget item we pass false for binding other widget items
+                    // to this widget item's events otherwise the events will get bound to multiple times.
+                    this.bindWidgetEventDependencies(widgetItem, false);
+                }
+                this.emptyView.toggleClass("hidden", this.widgetItems.length !== 0);
+            };
+            WidgetContainer.prototype.initialiseWidgetItem = function (sortableItemElement) {
+                var widgetItem;
+                var widgetItemElement = sortableItemElement.find("[data-widgetitem]");
+                var itemData = Core.WidgetItemData.getForElement(widgetItemElement);
+                if (itemData.ItemInitialiserClassName != null && Midas.Widgets[itemData.ItemInitialiserClassName] != null) {
+                    var itemInitialiser = new Midas.Widgets[itemData.ItemInitialiserClassName]();
+                    widgetItem = itemInitialiser.initialise($(widgetItemElement));
+                }
+                else {
+                    widgetItem = new Core.WidgetItem($(widgetItemElement));
+                }
+                this.widgetItems.push(widgetItem);
+                this.initialiseRemoveButtons(widgetItemElement);
+                return widgetItem;
+            };
+            WidgetContainer.prototype.bindWidgetEventDependencies = function (widgetItem, bindOtherWidgetItems) {
+                for (var _i = 0, _a = this.widgetItems; _i < _a.length; _i++) {
+                    var otherWidgetItem = _a[_i];
+                    if (otherWidgetItem.id !== widgetItem.id) {
+                        // If the widget item is dependent on an event from the other widget item then bind to it.
+                        if (widgetItem.getWidgetEventDependencies() != null) {
+                            for (var _b = 0, _c = widgetItem.getWidgetEventDependencies(); _b < _c.length; _b++) {
+                                var eventDependency = _c[_b];
+                                if (otherWidgetItem.widgetTypeName === eventDependency.widgetTypeName) {
+                                    otherWidgetItem.bind(eventDependency.eventType, eventDependency.handler);
+                                }
+                            }
+                        }
+                        if (bindOtherWidgetItems) {
+                            // If the other widget item is dependent on an event from the widget item then bind to it.
+                            if (otherWidgetItem.getWidgetEventDependencies() != null) {
+                                for (var _d = 0, _e = otherWidgetItem.getWidgetEventDependencies(); _d < _e.length; _d++) {
+                                    var eventDependency = _e[_d];
+                                    if (widgetItem.widgetTypeName === eventDependency.widgetTypeName) {
+                                        widgetItem.bind(eventDependency.eventType, eventDependency.handler);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            WidgetContainer.prototype.unbindWidgetEventDependencies = function (widgetItem) {
+                for (var _i = 0, _a = this.widgetItems; _i < _a.length; _i++) {
+                    var otherWidgetItem = _a[_i];
+                    if (otherWidgetItem.id !== widgetItem.id) {
+                        // If the widget item is dependent on an event from the other widget item then unbind from it.
+                        if (widgetItem.getWidgetEventDependencies() != null) {
+                            for (var _b = 0, _c = widgetItem.getWidgetEventDependencies(); _b < _c.length; _b++) {
+                                var eventDependency = _c[_b];
+                                if (otherWidgetItem.widgetTypeName === eventDependency.widgetTypeName) {
+                                    otherWidgetItem.bind(eventDependency.eventType, eventDependency.handler);
+                                }
+                            }
+                        }
+                        // If the other widget item is dependent on an event from the widget item then unbind from it.
+                        if (otherWidgetItem.getWidgetEventDependencies() != null) {
+                            for (var _d = 0, _e = otherWidgetItem.getWidgetEventDependencies(); _d < _e.length; _d++) {
+                                var eventDependency = _e[_d];
+                                if (widgetItem.widgetTypeName === eventDependency.widgetTypeName) {
+                                    widgetItem.bind(eventDependency.eventType, eventDependency.handler);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            WidgetContainer.prototype.initialiseRemoveButtons = function (container) {
+                container.find('[data-removebutton]').each(function (index, buttonElement) {
+                    var button = $(buttonElement);
+                    button.attr('data-confirm', 'Are you sure you want to remove this widget?');
+                    button.attr('data-confirm-title', 'Remove widget?');
+                });
+                Midas.Core.currentPage.initialiseConfirmationModal(container);
+            };
+            return WidgetContainer;
+        }(Core.Control));
+        Core.WidgetContainer = WidgetContainer;
+        var WidgetItemRequest = (function () {
+            function WidgetItemRequest() {
+            }
+            return WidgetItemRequest;
+        }());
+        Core.WidgetItemRequest = WidgetItemRequest;
+        var WidgetItemDeleteRequest = (function (_super) {
+            __extends(WidgetItemDeleteRequest, _super);
+            function WidgetItemDeleteRequest() {
+                _super.apply(this, arguments);
+            }
+            return WidgetItemDeleteRequest;
+        }(WidgetItemRequest));
+        Core.WidgetItemDeleteRequest = WidgetItemDeleteRequest;
+        var WidgetEventInfo = (function (_super) {
+            __extends(WidgetEventInfo, _super);
+            function WidgetEventInfo(widgetTypeName, eventType, handler) {
+                _super.call(this, eventType, handler);
+                this._widgetTypeName = widgetTypeName;
+            }
+            Object.defineProperty(WidgetEventInfo.prototype, "widgetTypeName", {
+                get: function () {
+                    return this._widgetTypeName;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            ;
+            return WidgetEventInfo;
+        }(Core.EventInfo));
+        Core.WidgetEventInfo = WidgetEventInfo;
+        var WidgetContainerInitialiser = (function () {
+            function WidgetContainerInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-widgetcontainer]').each(function (index, element) {
+                        var widgetContainer = new WidgetContainer($(element));
+                    });
+                };
+            }
+            return WidgetContainerInitialiser;
+        }());
+        Core.WidgetContainerInitialiser = WidgetContainerInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.WidgetContainerInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.widgetcontainer.js.map

@@ -1,0 +1,215 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Observable = (function () {
+            function Observable(settings) {
+                var _this = this;
+                if (settings === void 0) { settings = null; }
+                this.events = new EventDictionary([]);
+                if (settings != null && settings.events != null) {
+                    settings.events.forEach(function (event) {
+                        _this.bind(event.eventType, event.handler);
+                    });
+                }
+            }
+            Observable.prototype.bind = function (eventType, handler) {
+                var eventHandlers;
+                if (this.events.containsKey(eventType)) {
+                    eventHandlers = this.events[eventType];
+                }
+                else {
+                    eventHandlers = new Array();
+                    this.events.add(eventType, eventHandlers);
+                }
+                eventHandlers.push(handler);
+            };
+            Observable.prototype.unbind = function (eventType, handler) {
+                if (eventType == null) {
+                    this.events = new EventDictionary([]);
+                }
+                else if (this.events.containsKey(eventType)) {
+                    if (handler) {
+                        var eventHandlers = this.events[eventType];
+                        for (var idx = eventHandlers.length - 1; idx >= 0; idx--) {
+                            if (eventHandlers[idx] === handler) {
+                                eventHandlers.splice(idx, 1);
+                            }
+                        }
+                    }
+                    else {
+                        this.events[eventType] = new Array();
+                    }
+                }
+            };
+            Observable.prototype.trigger = function (eventType, data) {
+                if (data === void 0) { data = null; }
+                var eventHandlers = this.events[eventType];
+                if (eventHandlers) {
+                    var eventArgs = new EventArgs(this, data);
+                    eventHandlers = eventHandlers.slice();
+                    for (var idx = 0, length = eventHandlers.length; idx < length; idx++) {
+                        eventHandlers[idx].call(this, eventArgs);
+                    }
+                    return eventArgs.isDefaultPrevented;
+                }
+                return false;
+            };
+            return Observable;
+        }());
+        Core.Observable = Observable;
+        var ObservableSettings = (function () {
+            function ObservableSettings() {
+                this._events = new Array();
+            }
+            Object.defineProperty(ObservableSettings.prototype, "events", {
+                get: function () {
+                    return this._events;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return ObservableSettings;
+        }());
+        Core.ObservableSettings = ObservableSettings;
+        var ObservableObject = (function (_super) {
+            __extends(ObservableObject, _super);
+            function ObservableObject(value) {
+                _super.call(this);
+                if (value == null) {
+                    return;
+                }
+                for (var field in value) {
+                    var fieldValue = value[field];
+                    this[field] = fieldValue;
+                }
+                this.uniqueId = this.guid();
+            }
+            Object.defineProperty(ObservableObject.prototype, "uniqueId", {
+                get: function () {
+                    return this.uniqueIdField;
+                },
+                set: function (uniqueId) {
+                    this.uniqueIdField = uniqueId;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            ObservableObject.prototype.guid = function () {
+                var id = "", i, random;
+                for (i = 0; i < 32; i++) {
+                    random = Math.random() * 16 | 0;
+                    if (i == 8 || i == 12 || i == 16 || i == 20) {
+                        id += "-";
+                    }
+                    id += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+                }
+                return id;
+            };
+            return ObservableObject;
+        }(Observable));
+        Core.ObservableObject = ObservableObject;
+        var Model = (function (_super) {
+            __extends(Model, _super);
+            function Model(data, model) {
+                if (model === void 0) { model = null; }
+                _super.call(this, data);
+                this.defaultId = "";
+                if (model != null && model.id) {
+                    this.id = data[model.id];
+                    if (this.id === undefined) {
+                        this.id = this.defaultId;
+                    }
+                }
+            }
+            Object.defineProperty(Model.prototype, "id", {
+                get: function () {
+                    return this.idField;
+                },
+                set: function (id) {
+                    this.idField = id;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Model.prototype.isNew = function () {
+                return this.id === this.defaultId;
+            };
+            return Model;
+        }(ObservableObject));
+        Core.Model = Model;
+        var EventArgs = (function () {
+            function EventArgs(sender, data) {
+                this._sender = sender;
+                this._data = data;
+            }
+            Object.defineProperty(EventArgs.prototype, "sender", {
+                get: function () {
+                    return this._sender;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EventArgs.prototype, "data", {
+                get: function () {
+                    return this._data;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EventArgs.prototype, "isDefaultPrevented", {
+                get: function () {
+                    return this._isDefaultPrevented;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            EventArgs.prototype.preventDefault = function () {
+                this._isDefaultPrevented = true;
+            };
+            return EventArgs;
+        }());
+        Core.EventArgs = EventArgs;
+        var EventInfo = (function () {
+            function EventInfo(eventType, handler) {
+                this._eventType = eventType;
+                this._handler = handler;
+            }
+            Object.defineProperty(EventInfo.prototype, "eventType", {
+                get: function () {
+                    return this._eventType;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EventInfo.prototype, "handler", {
+                get: function () {
+                    return this._handler;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return EventInfo;
+        }());
+        Core.EventInfo = EventInfo;
+        var EventDictionary = (function (_super) {
+            __extends(EventDictionary, _super);
+            function EventDictionary(init) {
+                _super.call(this, init);
+            }
+            EventDictionary.prototype.values = function () {
+                return this._values;
+            };
+            return EventDictionary;
+        }(Core.Dictionary));
+        Core.EventDictionary = EventDictionary;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.observable.js.map
