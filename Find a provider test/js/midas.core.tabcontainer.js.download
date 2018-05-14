@@ -1,0 +1,100 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var TabContainer = (function () {
+            function TabContainer(selector) {
+                var _this = this;
+                this.initialise = function (container) {
+                    _this.container = container.find(_this.containerSelector);
+                    _this.isReady = true;
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+                this.disable = function () {
+                    if (_this.enabled) {
+                        _this.container.off("keydown.tabhandler", _this.tabHandler);
+                    }
+                };
+                this.enable = function () {
+                    if (_this.isReady) {
+                        _this.enabled = true;
+                        _this.container.on("keydown.tabhandler", _this.tabHandler);
+                        var tabbables = _this.container.find(":tabbable");
+                    }
+                };
+                this.focus = function () {
+                    var tabbables = _this.container.find(":tabbable");
+                    var first = tabbables.filter(":first");
+                    if (first.prop('type') === 'radio') {
+                        first = $('[name="' + first.prop('name') + '"]');
+                    }
+                    setTimeout(function () {
+                        if (first.prop('type') === 'radio') {
+                            var result = first.filter(':checked');
+                            if (result.length == 0) {
+                                first = first.first();
+                            }
+                            else {
+                                first = result.first();
+                            }
+                        }
+                        first.focus();
+                    }, 0);
+                };
+                this.tabHandler = function (event) {
+                    // prevent tabbing out of container
+                    if (event.keyCode !== $.ui.keyCode.TAB || event.isDefaultPrevented()) {
+                        return;
+                    }
+                    var tabbables = _this.container.find(":tabbable");
+                    var first = tabbables.filter(":first");
+                    if (first.prop('type') === 'radio') {
+                        first = $('[name="' + first.prop('name') + '"]');
+                    }
+                    var last = tabbables.filter(":last");
+                    if (last.prop('type') === 'radio') {
+                        last = $('[name="' + last.prop('name') + '"]');
+                    }
+                    if (($(event.target).is(last) || event.target === _this.container[0]) && !event.shiftKey) {
+                        setTimeout(function () {
+                            if (first.prop('type') === 'radio') {
+                                var result = first.filter(':checked');
+                                if (result.length == 0) {
+                                    first = first.first();
+                                }
+                                else {
+                                    first = result.first();
+                                }
+                            }
+                            first.focus();
+                        }, 0);
+                        event.preventDefault();
+                    }
+                    else if (($(event.target).is(first) || event.target === _this.container[0]) && event.shiftKey) {
+                        setTimeout(function () {
+                            if (last.prop('type') === 'radio') {
+                                var result = last.filter(':checked');
+                                if (last.length == 0) {
+                                    last = last.first();
+                                }
+                                else {
+                                    last = result.first();
+                                }
+                            }
+                            last.focus();
+                        }, 0);
+                        event.preventDefault();
+                    }
+                };
+                this.containerSelector = selector;
+            }
+            return TabContainer;
+        }());
+        Core.TabContainer = TabContainer;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.TabContainer.js.map

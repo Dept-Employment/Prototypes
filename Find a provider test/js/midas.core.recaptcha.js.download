@@ -1,0 +1,83 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Recaptcha = (function () {
+            function Recaptcha(selector) {
+                var _this = this;
+                if (selector === void 0) { selector = '#Recaptcha'; }
+                this.hasRendered = function () {
+                    return _this.widget != null;
+                };
+                this.render = function (callback) {
+                    if (callback === void 0) { callback = null; }
+                    _this.widget = $(_this.selector);
+                    var sitekey = _this.widget.data('sitekey');
+                    if (_this.widget.length > 0) {
+                        _this.recaptcha = grecaptcha.render(_this.widget[0], {
+                            'sitekey': sitekey,
+                            'callback': callback
+                        });
+                    }
+                };
+                this.reset = function () {
+                    if (_this.widget != null) {
+                        _this.show();
+                        grecaptcha.reset(_this.recaptcha);
+                    }
+                };
+                this.response = function () {
+                    if (_this.recaptcha != null) {
+                        return grecaptcha.getResponse(_this.recaptcha);
+                    }
+                    return null;
+                };
+                this.remove = function () {
+                    if (_this.widget != null) {
+                        var parent = _this.parent();
+                        if (parent != null) {
+                            parent.remove();
+                        }
+                        else {
+                            _this.widget.remove();
+                        }
+                    }
+                };
+                this.hide = function () {
+                    if (_this.widget != null) {
+                        var parent = _this.parent();
+                        if (parent != null) {
+                            parent.addClass("hidden");
+                        }
+                        else {
+                            _this.widget.addClass("hidden");
+                        }
+                    }
+                };
+                this.show = function () {
+                    if (_this.widget != null) {
+                        var parent = _this.parent();
+                        if (parent != null) {
+                            parent.removeClass("hidden");
+                        }
+                        else {
+                            _this.widget.removeClass("hidden");
+                        }
+                    }
+                };
+                this.parent = function () {
+                    if (_this.widget != null) {
+                        return _this.widget.closest('.form-group');
+                    }
+                    return null;
+                };
+                this.selector = selector;
+            }
+            return Recaptcha;
+        }());
+        Core.Recaptcha = Recaptcha;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.recaptcha.js.map

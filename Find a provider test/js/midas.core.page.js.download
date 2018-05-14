@@ -1,0 +1,227 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Page = (function () {
+            function Page(settings) {
+                var _this = this;
+                this.initialise = function (container) {
+                    _this.datePicker.initialise(container);
+                    _this.autoCompleteInitialiser.initialise(container);
+                    _this.selectListInitialiser.initialise(container);
+                    _this.ajaxLoadingPanelInitialiser.initialise(container);
+                    _this.listViewInitialiser.initialise(container);
+                    _this.modalInitialiser.initialise(container);
+                    _this.initialiseConfirmationModal(container);
+                    _this.googleAnalyticsTracker.initialise(container);
+                    _this.externalLinks.initialise(container);
+                    _this.fileUpload.initialise(container);
+                    _this.form.initialise(container);
+                    _this.favouriteInitialiser.initialise(container);
+                    _this.favourites.initialise(container);
+                    _this.addressAutoComplete.initialise(container);
+                    _this.sessionTimer.initialise(container);
+                    _this.ratingInitialiser.initialise(container);
+                    _this.contactJobSeekerButtonInitialiser.initialise(container);
+                    _this.initialiseMaxLengthIndicators(container);
+                    _this.smartNavInitialiser.initialise(container);
+                };
+                this.ready = function () {
+                    _this.login.ready();
+                    _this.navigationMenu.ready();
+                    _this.scrollLinks.ready();
+                    _this.addressAutoComplete.ready();
+                    _this.datePicker.ready();
+                    _this.autoCompleteInitialiser.ready();
+                    _this.selectListInitialiser.ready();
+                    _this.editableDisplayViewInitialiser.ready();
+                    _this.ajaxLoadingPanelInitialiser.ready();
+                    _this.modalInitialiser.ready();
+                    _this.scrollTop.ready();
+                    _this.initialiseTooltips();
+                    _this.initialiseConfirmationModal($(document));
+                    _this.spellCheck.ready();
+                    _this.googleAnalyticsTracker.ready();
+                    _this.externalLinks.ready();
+                    _this.fileUpload.ready();
+                    _this.contrastSwitcher.ready();
+                    _this.form.ready();
+                    _this.favouriteInitialiser.ready();
+                    _this.favourites.ready();
+                    _this.rotatingBanner.ready();
+                    _this.sessionTimer.ready();
+                    _this.responsiveHelper.ready();
+                    _this.ratingInitialiser.ready();
+                    _this.contactJobSeekerButtonInitialiser.ready();
+                    Midas.Core.Loader.hideLoader();
+                    _this.initialiseMaxLengthIndicators($(document));
+                    _this.smartNavInitialiser.ready();
+                };
+                this.recaptchaReady = function (callback) {
+                    if (!callback) {
+                        $(document).trigger("recaptchaReady");
+                    }
+                    else {
+                        $(document).on("recaptchaReady", callback);
+                    }
+                };
+                this.initialiseTooltips = function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+                    $('[data-toggle="popover"]').popover();
+                };
+                this.initialiseConfirmationModal = function (container) {
+                    container.find('button[data-confirm],a[data-confirm]').click(function (e, confirmed) {
+                        var target = $(e.currentTarget);
+                        var targetRole = target.attr('role');
+                        if (confirmed == null || !confirmed) {
+                            var modalContainer = $("#ConfirmationModal");
+                            modalContainer.find('.modal-body').text(target.attr('data-confirm'));
+                            var title = target.attr('data-confirm-title');
+                            if (title) {
+                                modalContainer.find('.modal-title').text(title);
+                            }
+                            var confirmButton = modalContainer.find('[data-modal-confirmbutton]');
+                            var confirmLink = modalContainer.find('[data-modal-confirmlink]');
+                            confirmButton.toggleClass('hidden', true);
+                            confirmLink.toggleClass('hidden', true);
+                            var modal = modalContainer.modal({ show: true });
+                            if (target.is('a') && targetRole != 'button') {
+                                confirmLink.toggleClass('hidden', false);
+                                confirmLink.attr('href', target.attr('href'));
+                            }
+                            else {
+                                confirmButton.toggleClass('hidden', false);
+                                // Unbind all click events from the confirm button (in case they confirm modal has
+                                // previously been opened but closed without clicking the confirm button) and then
+                                // make its click event execute the click handler of the target button. This prevents
+                                // the click handler of the target button being executed multiple times.
+                                confirmButton.unbind('click');
+                                confirmButton.click(function () {
+                                    modal.modal('hide');
+                                    target.trigger('click', true);
+                                });
+                            }
+                            modal.on('hide.bs.modal', function () {
+                                target.focus();
+                            });
+                            return false;
+                        }
+                        return true;
+                    });
+                };
+                this.initialiseMaxLengthIndicators = function (container) {
+                    $(container).find('textarea[maxlength], input[type=text][maxlength]:not([data-datepicker])').maxlength({
+                        alwaysShow: true,
+                        placement: 'bottom-right-inside'
+                    });
+                };
+                this.scrollToElement = function (elementOrSelector, duration, verticalOffset) {
+                    var element = $(elementOrSelector);
+                    var elementOffset = element.offset();
+                    if (duration == null) {
+                        duration = 500;
+                    }
+                    if (verticalOffset == null) {
+                        var currentScrollPosition = $(document).scrollTop();
+                        if (_this.navigationMenu.isVisible) {
+                            currentScrollPosition += _this.navigationMenu.height;
+                        }
+                        if (currentScrollPosition < elementOffset.top) {
+                            // Scrolling down - navigation menu will be hidden so don't account for it's height.
+                            verticalOffset = 0;
+                        }
+                        else if (currentScrollPosition > elementOffset.top) {
+                            // Scrolling up - navigation menu will be shown so account for it's height.
+                            verticalOffset = -Math.abs(_this.navigationMenu.height);
+                        }
+                        else {
+                            // Not scrolling - ensure we remain in the same spot.
+                            if (_this.navigationMenu.isVisible) {
+                                verticalOffset = -Math.abs(_this.navigationMenu.height);
+                            }
+                            else {
+                                verticalOffset = 0;
+                            }
+                        }
+                    }
+                    var offsetTop = elementOffset.top + verticalOffset;
+                    $('html, body').animate({
+                        scrollTop: offsetTop
+                    }, duration);
+                };
+                this.scrollAndCenterElement = function (element, duration) {
+                    var verticalOffset = -($(window).height() / 2 - $(element).height() / 2);
+                    // If the target element is longer than the current window height, scroll to the top of the element instead
+                    if ($(element).height() > $(window).height()) {
+                        _this.scrollToElement(element, duration, 0);
+                    }
+                    else {
+                        _this.scrollToElement(element, duration, verticalOffset);
+                    }
+                };
+                this.showGenericErrorModal = function () {
+                    _this.showErrorModal('An unexpected technical issue occurred. Please try again later and if the issue persists please <a title="Email" href="mailto:ajsfeedback@cc.employment.gov.au">contact us</a>.', true);
+                };
+                this.showErrorModal = function (message, refreshPage) {
+                    if (refreshPage === void 0) { refreshPage = false; }
+                    var errorModal = $('#ErrorModal');
+                    errorModal.find('.modal-body').html(message);
+                    if (refreshPage) {
+                        errorModal.find('button.btn-default').click(function () {
+                            window.location.reload(); // for technical issues to force refresh since that will fix some stuff
+                        });
+                    }
+                    errorModal.modal({ show: true });
+                };
+                this.fixErrorSummaryLinks = function () {
+                    $("a.summary-error-item").click(function (e) {
+                        e.preventDefault();
+                        $($(this).attr("href")).focus();
+                    });
+                };
+                this.settings = settings;
+                this.navigationMenu = new Midas.Core.NavigationMenu();
+                this.scrollLinks = new Midas.Core.ScrollLinks();
+                this.addressAutoComplete = new Midas.Core.Address();
+                this.datePicker = new Midas.Core.Datepicker();
+                this.autoCompleteInitialiser = new Midas.Core.AutoCompleteInitialiser();
+                this.selectListInitialiser = new Midas.Core.SelectListInitialiser();
+                this.editableDisplayViewInitialiser = new Midas.Core.EditableDisplayViewInitialiser();
+                this.ajaxLoadingPanelInitialiser = new Midas.Core.AjaxLoadingPanelInitialiser();
+                this.listViewInitialiser = new Midas.Core.ListViewInitialiser();
+                this.modalInitialiser = new Midas.Core.ModalInitialiser();
+                this.login = new Midas.Core.Login();
+                this.summary = new Midas.Core.Summary();
+                this.scrollTop = new Midas.Core.ScrollTop();
+                this.spellCheck = new Midas.Core.Spelling();
+                this.googleAnalyticsTracker = new Midas.Core.GoogleAnalyticsTracker();
+                this.externalLinks = new Midas.Core.ExternalLinks();
+                this.fileUpload = new Midas.Core.FileUpload();
+                this.contrastSwitcher = new Midas.Core.ContrastSwitcher();
+                this.form = new Midas.Core.Form();
+                this.favouriteInitialiser = new Midas.Core.FavouriteInitialiser();
+                this.favourites = new Midas.Core.Favourites();
+                this.rotatingBanner = new Midas.Core.RotatingBannerElement();
+                this.notification = new Midas.Core.Notification();
+                this.sessionTimer = new Midas.Core.SessionTimer();
+                this.responsiveHelper = new Midas.Core.ResponsiveHelper();
+                this.ratingInitialiser = new Core.RatingInitialiser();
+                this.contactJobSeekerButtonInitialiser = new Core.ContactJobSeekerButtonInitialiser();
+                this.smartNavInitialiser = new Midas.Core.SmartNavInitialiser();
+            }
+            Page.prototype.HtmlDecode = function (value) {
+                return $('<div/>').html(value).text();
+            };
+            return Page;
+        }());
+        Core.Page = Page;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    if (Midas.Core.currentPage != null) {
+        Midas.Core.currentPage.ready();
+    }
+});
+//# sourceMappingURL=midas.core.page.js.map

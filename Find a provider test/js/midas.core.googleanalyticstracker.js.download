@@ -1,0 +1,85 @@
+/// <reference path="typings/google.analytics/ga.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var GaEventTracking = (function () {
+            function GaEventTracking() {
+                var _this = this;
+                this.validate = function () {
+                    return (_this.eventType != null &&
+                        _this.category != null &&
+                        _this.action != null &&
+                        _this.label != null &&
+                        _this.value != null &&
+                        !isNaN(_this.value));
+                };
+            }
+            return GaEventTracking;
+        }());
+        var GoogleAnalyticsTracker = (function () {
+            function GoogleAnalyticsTracker() {
+                var _this = this;
+                this.registerPageViewEvent = function (tData) {
+                    if (tData.validate() &&
+                        tData.eventType == 'view') {
+                        if (typeof ga !== 'undefined') {
+                            ga('send', {
+                                hitType: 'event',
+                                eventCategory: tData.category,
+                                eventAction: tData.action,
+                                eventLabel: tData.label,
+                                eventValue: tData.value
+                            });
+                        }
+                    }
+                };
+                this.registerClickEvent = function (tData, element) {
+                    if (tData.validate() &&
+                        tData.eventType == 'click') {
+                        element.click(function (event) {
+                            if (typeof ga !== 'undefined') {
+                                ga('send', {
+                                    hitType: 'event',
+                                    eventCategory: tData.category,
+                                    eventAction: tData.action,
+                                    eventLabel: tData.label,
+                                    eventValue: tData.value
+                                });
+                            }
+                        });
+                    }
+                };
+                this.elementReady = function (registerElement) {
+                    _this.initialise($(registerElement));
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            GoogleAnalyticsTracker.prototype.initialise = function (container) {
+                var _this = this;
+                container.find('[data-ga-event]').each(function (index, element) {
+                    var rData = $(element).data("gaEvent");
+                    var isElementVisible = $(element).is(':visible');
+                    var tData = new GaEventTracking();
+                    if (rData != null) {
+                        tData.eventType = rData.eventType;
+                        tData.category = rData.category;
+                        tData.action = rData.action;
+                        tData.label = rData.label;
+                        tData.value = !isNaN(rData.value) ? rData.value : 0;
+                    }
+                    if (isElementVisible) {
+                        _this.registerPageViewEvent(tData);
+                        _this.registerClickEvent(tData, $(element));
+                    }
+                });
+            };
+            return GoogleAnalyticsTracker;
+        }());
+        Core.GoogleAnalyticsTracker = GoogleAnalyticsTracker;
+        Core.googleAnalytics = new Midas.Core.GoogleAnalyticsTracker();
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.googleanalyticstracker.js.map

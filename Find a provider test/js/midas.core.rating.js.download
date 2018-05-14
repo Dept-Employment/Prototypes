@@ -1,0 +1,292 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Rating = (function (_super) {
+            __extends(Rating, _super);
+            function Rating(element) {
+                _super.call(this, element, Core.ControlType.Rating, {
+                    name: null,
+                    value: null,
+                    min: 0,
+                    max: 5,
+                    step: 1,
+                    readonly: false,
+                    resetable: true,
+                    baseClass: "fa",
+                    emptyClass: "fa-star-o",
+                    filledClass: "fa-star",
+                    resetClass: "fa-minus-circle",
+                    hiddenClass: "m-rating-hidden"
+                });
+            }
+            Object.defineProperty(Rating.prototype, "valueElement", {
+                get: function () {
+                    return this.valueElementField;
+                },
+                set: function (element) {
+                    this.valueElementField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Rating.prototype, "resetElement", {
+                get: function () {
+                    return this.resetElementField;
+                },
+                set: function (element) {
+                    this.resetElementField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Rating.prototype, "ratingElementsContainer", {
+                get: function () {
+                    return this.ratingElementsContainerField;
+                },
+                set: function (element) {
+                    this.ratingElementsContainerField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Rating.prototype, "ratingElements", {
+                get: function () {
+                    return this.ratingElementsField;
+                },
+                set: function (element) {
+                    this.ratingElementsField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Rating.prototype.initialise = function () {
+                var _this = this;
+                // Get any rating setting from attributes.
+                var ratingAttributes = [
+                    "name",
+                    "value",
+                    "min",
+                    "max",
+                    "readonly",
+                    "resetable",
+                    "emptyclass",
+                    "filledclass"
+                ];
+                var attributeSettings = {};
+                $.each(this.element.get(0).attributes, function (index, attribute) {
+                    if (attribute.name.indexOf("data-rating-") === 0) {
+                        var suffix = attribute.name.replace("data-rating-", "");
+                        if ($.inArray(suffix, ratingAttributes) !== -1) {
+                            attributeSettings[suffix] = _this.element.data('rating' + _this.capitaliseFirstLetter(suffix));
+                        }
+                    }
+                });
+                this.settings = $.extend(true, {}, this.settings, attributeSettings);
+                if (this.settings.value !== null) {
+                    this.settings.value = this.between(this.settings.value, this.settings.min, this.settings.max);
+                }
+                this.initialiseElement();
+            };
+            Rating.prototype.initialiseElement = function () {
+                this.element.empty();
+                this.element.addClass('m-rating');
+                // Create the value element.
+                this.valueElement = $('<input />', {
+                    name: this.settings.name,
+                    'class': this.settings.hiddenClass
+                }).appendTo(this.element);
+                // Create the reset element.
+                this.resetElement = $('<button />', {
+                    id: "rating-reset-" + this.settings.name,
+                    type: "button",
+                    title: "Reset rating",
+                    'data-role': "none",
+                    'aria-label': "reset rating",
+                    'aria-controls': 'rating-elements-' + this.settings.name,
+                    'class': 'm-rating-reset ' + this.settings.baseClass + ' ' + this.settings.resetClass + ' ' + this.settings.hiddenClass,
+                }).appendTo(this.element);
+                // Create the rating elements container.
+                this.ratingElementsContainer = $('<div />', {
+                    id: 'rating-elements-' + this.settings.name,
+                    role: 'slider',
+                    'aria-label': 'rating',
+                    'aria-valuemin': this.settings.min,
+                    'aria-valuemax': this.settings.max,
+                    'aria-valuenow': this.settings.value,
+                    'aria-readonly': this.settings.readonly,
+                    'aria-owns': this.resetElement.attr('id'),
+                    'aria-orientation': 'horizontal',
+                    tabindex: 0,
+                    'class': 'm-rating-elements'
+                }).appendTo(this.element);
+                // Create the rating elements.
+                for (var i = this.settings.min + 1; i <= this.settings.max; i++) {
+                    var span = $('<span />', {
+                        'class': this.settings.baseClass + " " + this.settings.emptyClass,
+                        title: i,
+                        'data-value': i
+                    });
+                    if (this.settings.value && i <= this.settings.value) {
+                        span.removeClass(this.settings.emptyClass);
+                        span.addClass(this.settings.filledClass);
+                    }
+                    span.appendTo(this.ratingElementsContainer);
+                }
+                this.ratingElements = this.ratingElementsContainer.children('span');
+                this.setValue(this.settings.value, false);
+                if (!this.settings.readonly) {
+                    this.element.addClass('m-rating-editable');
+                    this.initialiseActions();
+                }
+                if (this.settings.resetable) {
+                    this.resetElement.removeClass(this.settings.hiddenClass);
+                }
+            };
+            Rating.prototype.initialiseActions = function () {
+                var _this = this;
+                this.ratingElementsContainer.mouseleave(function () {
+                    var value = _this.getValue();
+                    _this.fill(value);
+                });
+                this.ratingElementsContainer.keyup(function (e) {
+                    e.preventDefault();
+                    // On pressing left or down decrement the value
+                    if (e.which === 37 || e.which === 40) {
+                        var currentValue = _this.getValue();
+                        if (currentValue !== null) {
+                            _this.setValue((_this.getValue() - _this.settings.step), null);
+                        }
+                    }
+                    // On pressing right or up increment the value
+                    if (e.which === 38 || e.which === 39) {
+                        _this.setValue((_this.getValue() + _this.settings.step), null);
+                    }
+                });
+                this.ratingElements.bind("mouseover", function (e) {
+                    var value = parseFloat($(e.currentTarget).data('value'));
+                    _this.fill(value);
+                    var title = $(_this).data('value') + ". ";
+                    var currentValue = _this.getValue();
+                    if (currentValue === null) {
+                        title = title + "No current rating.";
+                    }
+                    else {
+                        title = title + "Current rating is " + currentValue + " out of " + _this.settings.max + ".";
+                    }
+                    $(_this).attr('title', title);
+                });
+                this.ratingElements.click(function (e) {
+                    var value = parseFloat($(e.currentTarget).data('value'));
+                    _this.setValue(value, null);
+                });
+                if (this.settings.resetable) {
+                    this.resetElement.click(function () {
+                        _this.reset();
+                    });
+                }
+            };
+            Rating.prototype.getValue = function (ariaValue) {
+                if (ariaValue === void 0) { ariaValue = null; }
+                var value = null;
+                if (ariaValue) {
+                    value = parseFloat(this.ratingElementsContainer.attr('aria-valuenow'));
+                }
+                else {
+                    var floatValue = parseFloat(this.valueElement.val());
+                    if (!isNaN(floatValue)) {
+                        value = floatValue;
+                    }
+                }
+                return value;
+            };
+            Rating.prototype.setValue = function (value, raiseEvents) {
+                raiseEvents = raiseEvents != null ? raiseEvents : true;
+                if (value !== null && value !== this.settings.min) {
+                    value = this.between(value, this.settings.min, this.settings.max);
+                }
+                else {
+                    value = null;
+                }
+                if (raiseEvents) {
+                    var event = $.Event('beforerated');
+                    $(this).trigger(event, [value]);
+                    if (event.isDefaultPrevented()) {
+                        return;
+                    }
+                }
+                this.fill(value);
+                if (value !== null && value !== this.settings.min) {
+                    this.ratingElementsContainer.attr('aria-valuenow', value);
+                    this.ratingElementsContainer.attr('aria-valuetext', null);
+                    this.valueElement.val(value);
+                }
+                else {
+                    this.ratingElementsContainer.attr('aria-valuenow', this.settings.min);
+                    this.ratingElementsContainer.attr('aria-valuetext', 'no rating');
+                    this.valueElement.val(null);
+                }
+                if (raiseEvents) {
+                    $(this).trigger('rated', [value]);
+                    this.trigger('rated', { value: value });
+                }
+            };
+            Rating.prototype.reset = function () {
+                var event = $.Event('beforereset');
+                $(this).trigger(event);
+                if (event.isDefaultPrevented()) {
+                    return;
+                }
+                this.setValue.call(null, false);
+                $(this).trigger('reset');
+            };
+            Rating.prototype.fill = function (value) {
+                for (var i = 1; i <= this.ratingElements.length; i++) {
+                    var element = this.ratingElements.eq(i - 1);
+                    var elementValue = element.data('value');
+                    if (elementValue <= value) {
+                        element.toggleClass(this.settings.emptyClass, false);
+                        element.toggleClass(this.settings.filledClass, true);
+                    }
+                    else {
+                        element.toggleClass(this.settings.emptyClass, true);
+                        element.toggleClass(this.settings.filledClass, false);
+                    }
+                }
+            };
+            Rating.prototype.between = function (value, min, max) {
+                return Math.min(Math.max(parseFloat(value), min), max);
+            };
+            Rating.prototype.capitaliseFirstLetter = function (value) {
+                return value.charAt(0).toUpperCase() + value.substr(1);
+            };
+            Rating.nameSpace = ".coreRating";
+            return Rating;
+        }(Core.Control));
+        Core.Rating = Rating;
+        var RatingInitialiser = (function () {
+            function RatingInitialiser() {
+                var _this = this;
+                this.initialise = function (container) {
+                    container.find('[data-rating]').each(function (index, element) {
+                        var ratingElement = $(element);
+                        var rating = new Rating(ratingElement);
+                    });
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            return RatingInitialiser;
+        }());
+        Core.RatingInitialiser = RatingInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.rating.js.map

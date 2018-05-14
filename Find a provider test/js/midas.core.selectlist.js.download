@@ -1,0 +1,217 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SelectList = (function () {
+            function SelectList(element) {
+                var _this = this;
+                this.loadItems = function () {
+                    var parentList = _this.parentList, dependentList = _this.element, settings = _this.settings;
+                    if (parentList.val() == "" || parentList.val() == "-1") {
+                        dependentList.val("");
+                        dependentList.trigger("change");
+                        if (settings.disableDependent) {
+                            _this.disableList(dependentList);
+                        }
+                    }
+                    else {
+                        _this.currentValue = dependentList.val();
+                        dependentList.empty();
+                        var loadingItem = $('<option />');
+                        loadingItem.attr('value', '').text(settings.loadingText);
+                        loadingItem.attr('selected', 'selected');
+                        dependentList.prepend(loadingItem);
+                        dependentList.val("");
+                        dependentList.trigger("change");
+                        _this.disableList(dependentList);
+                        settings.parameters.parentValue = parentList.val();
+                        $.ajax({
+                            url: settings.controllerActionUrl,
+                            global: false,
+                            beforeSend: Midas.Core.ajax.beforeSend,
+                            type: "POST",
+                            data: JSON.stringify(settings.parameters),
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: _this.onGetItemsSuccess
+                        });
+                    }
+                };
+                this.onGetItemsSuccess = function (data) {
+                    var dependentList = _this.element, settings = _this.settings;
+                    dependentList.empty();
+                    _this.onDisplayingItems();
+                    var hasCurrentValue = false;
+                    $.each(data, function () {
+                        if (this.Value == this.currentValue) {
+                            hasCurrentValue = true;
+                        }
+                        var option = $('<option />');
+                        option.attr('value', this.Value).text(this.Key);
+                        dependentList.append(option);
+                    });
+                    if (settings.showListEmptyItem && dependentList.children("option").length == 0) {
+                        var listEmptyItem = $('<option />');
+                        listEmptyItem.attr('value', '').text(settings.listEmptyItemText);
+                        listEmptyItem.attr('selected', 'selected');
+                        dependentList.prepend(listEmptyItem);
+                    }
+                    if (hasCurrentValue) {
+                        dependentList.val(_this.currentValue);
+                        dependentList.trigger("change");
+                    }
+                    _this.enableList(dependentList);
+                    _this.onDisplayedItems();
+                };
+                this.onDisplayingItems = function () {
+                };
+                this.onDisplayedItems = function () {
+                };
+                this.enableList = function (list) {
+                    list.prop("disabled", false);
+                    list.removeClass('is-disabled');
+                };
+                this.disableList = function (list) {
+                    list.prop("disabled", true);
+                    list.addClass('is-disabled');
+                };
+                this.element = element;
+                if (this.settings != null) {
+                    if (this.settings.isDependent) {
+                        this.settings.parameters = {
+                            relationshipTypeCode: this.settings.relationshipTypeCode,
+                            displayType: this.settings.displayType,
+                            relatedCodeType: this.settings.relatedCodeType,
+                            parentValue: "",
+                            exactLookup: this.settings.exactLookup,
+                            includeExpired: this.settings.includeExpired,
+                            displayOrder: this.settings.displayOrder,
+                            displayOrderType: this.settings.displayOrderType
+                        };
+                    }
+                    else {
+                        this.settings.parameters = {
+                            'parentValue': ""
+                        };
+                    }
+                    if (!this.settings.loadingText) {
+                        this.settings.loadingText = "Loading...";
+                    }
+                    if (this.settings.isDependent) {
+                        var parentList = this.parentList;
+                        if (this.settings.disableDependent && (parentList.val() == "" || parentList.val() == "-1")) {
+                            this.disableList(this.element);
+                        }
+                        if (this.settings.initialiseOnLoad) {
+                            this.loadItems();
+                        }
+                        parentList.change(this.loadItems);
+                    }
+                }
+            }
+            Object.defineProperty(SelectList.prototype, "element", {
+                get: function () {
+                    return this.elementField;
+                },
+                set: function (element) {
+                    this.elementField = element;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SelectList.prototype, "settings", {
+                get: function () {
+                    return this.element.data('settings');
+                },
+                set: function (settings) {
+                    this.element.data('settings', settings);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SelectList.prototype, "parentList", {
+                get: function () {
+                    return $('#' + this.settings.parentListId);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SelectList.prototype, "currentValue", {
+                get: function () {
+                    return this.currentValueField;
+                },
+                set: function (currentValue) {
+                    this.currentValueField = currentValue;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return SelectList;
+        }());
+        var DropDownList = (function (_super) {
+            __extends(DropDownList, _super);
+            function DropDownList(element) {
+                var _this = this;
+                _super.call(this, element);
+                this.onDisplayingItems = function () {
+                    var dependentList = _this.element, settings = _this.settings;
+                    if (settings.showAllItem) {
+                        var allItem = $('<option />');
+                        allItem.attr('value', settings.allItemValue).text(settings.allItemText);
+                        dependentList.append(allItem);
+                    }
+                    if (settings.showEmptyItem) {
+                        var emptyItem = $('<option />');
+                        emptyItem.attr('value', '').text(settings.emptyItemText);
+                        emptyItem.attr('selected', 'selected');
+                        dependentList.prepend(emptyItem);
+                    }
+                };
+                this.onDisplayedItems = function () {
+                };
+            }
+            return DropDownList;
+        }(SelectList));
+        Core.DropDownList = DropDownList;
+        var ListBox = (function (_super) {
+            __extends(ListBox, _super);
+            function ListBox(element) {
+                _super.call(this, element);
+                this.onDisplayingItems = function () {
+                };
+                this.onDisplayedItems = function () {
+                };
+                element.removeAttr('multiple');
+                element.attr('size', 10);
+            }
+            return ListBox;
+        }(SelectList));
+        Core.ListBox = ListBox;
+        var SelectListInitialiser = (function () {
+            function SelectListInitialiser() {
+                var _this = this;
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            SelectListInitialiser.prototype.initialise = function (container) {
+                container.find('select[data-selectlist-type=DropDownList]').each(function (index, element) {
+                    var list = new Midas.Core.DropDownList($(element));
+                });
+                container.find('select[data-selectlist-type=ListBox]').each(function (index, element) {
+                    var list = new Midas.Core.ListBox($(element));
+                });
+            };
+            return SelectListInitialiser;
+        }());
+        Core.SelectListInitialiser = SelectListInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.selectlist.js.map

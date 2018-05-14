@@ -1,0 +1,123 @@
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var RotatingBannerItem = (function () {
+            function RotatingBannerItem() {
+                var _this = this;
+                this.jqElement = function () {
+                    var selector = "#";
+                    if (_this.elementId != null) {
+                        selector = selector + String(_this.elementId);
+                    }
+                    return $(selector);
+                };
+                this.jqContentList = function () {
+                    var selector = "#";
+                    if (_this.contentListId != null) {
+                        selector = selector + String(_this.contentListId);
+                    }
+                    return $(selector);
+                };
+                this.initialise = function () {
+                    _this.bannerType = "simple";
+                };
+                this.validate = function () {
+                    return (_this.elementId != null &&
+                        _this.contentListId != null);
+                };
+            }
+            return RotatingBannerItem;
+        }());
+        var RotatingBannerElement = (function () {
+            function RotatingBannerElement() {
+                var _this = this;
+                this.rotateBannerSimpleContent = function (bannerItem, index) {
+                    if (bannerItem.validate()) {
+                        var banner = bannerItem.jqElement().find('SPAN');
+                        var list = bannerItem.jqContentList().find('LI');
+                        var listLength = list.length;
+                        var displayText = _this.getSimpleContent(list, index);
+                        banner.text(displayText);
+                        banner.fadeIn(20)
+                            .delay(1500)
+                            .fadeOut(100, function () {
+                            if (index < listLength - 1) {
+                                index++;
+                            }
+                            else {
+                                index = 0;
+                            }
+                            _this.rotateBannerSimpleContent(bannerItem, index);
+                        });
+                    }
+                };
+                this.rotateBannerBasicHtmlContent = function (bannerItem, index) {
+                    if (bannerItem.validate()) {
+                        var banner = bannerItem.jqElement();
+                        var list = bannerItem.jqContentList().find('LI');
+                        var listLength = list.length;
+                        var displayHtml = _this.getBasicHtmlContent(list, index);
+                        banner.html(displayHtml);
+                        banner.fadeIn(20)
+                            .delay(1500)
+                            .fadeOut(100, function () {
+                            if (index < listLength - 1) {
+                                index++;
+                            }
+                            else {
+                                index = 0;
+                            }
+                            _this.rotateBannerBasicHtmlContent(bannerItem, index);
+                        });
+                    }
+                };
+                this.getSimpleContent = function (list, index) {
+                    var contentText = "";
+                    contentText = $(list.get(index)).text();
+                    return contentText;
+                };
+                this.getBasicHtmlContent = function (list, index) {
+                    var contentHtml = "";
+                    if (list.get(index)[0] !== null) {
+                        contentHtml = $(list.get(index))[0].innerHTML;
+                    }
+                    return contentHtml;
+                };
+                this.ready = function () {
+                    _this.initialise($(document));
+                };
+            }
+            RotatingBannerElement.prototype.initialise = function (container) {
+                var _this = this;
+                container.find('[data-rotating-banner-element]').each(function (index, element) {
+                    var rElement = $(element).data("rotatingBannerElement");
+                    var isElementVisible = $(element).is(':visible');
+                    var bannerItem = new RotatingBannerItem();
+                    bannerItem.initialise();
+                    if (rElement != null) {
+                        bannerItem.elementId = rElement.elementId;
+                        bannerItem.contentListId = rElement.contentListId;
+                        if (rElement.bannerType != null) {
+                            bannerItem.bannerType = rElement.bannerType;
+                        }
+                    }
+                    if (isElementVisible) {
+                        if (bannerItem.bannerType == "simple") {
+                            _this.rotateBannerSimpleContent(bannerItem, 0);
+                        }
+                        else if (bannerItem.bannerType == "basicHtml") {
+                            _this.rotateBannerBasicHtmlContent(bannerItem, 0);
+                        }
+                        {
+                        }
+                    }
+                });
+            };
+            return RotatingBannerElement;
+        }());
+        Core.RotatingBannerElement = RotatingBannerElement;
+        Core.rotatingBannerElement = new Midas.Core.RotatingBannerElement();
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.rotatingbanner.js.map

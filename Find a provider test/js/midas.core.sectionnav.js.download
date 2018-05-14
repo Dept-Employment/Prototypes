@@ -1,0 +1,87 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SectionNav = (function () {
+            function SectionNav() {
+                var _this = this;
+                // Create nav items
+                var count = 0;
+                var navigationSections = $("[data-nav-section]");
+                var navContainer = $("[data-section-nav-container] ul");
+                navigationSections.each(function (e) {
+                    var source = $(this);
+                    var sectionNum = "section" + count.toString();
+                    var sectionTitle = "<span>" + source.attr("data-nav-section-title") + "</span>";
+                    sectionTitle = sectionTitle.replace(/ /g, "&nbsp;");
+                    source.attr("data-nav-section", sectionNum.toString());
+                    var li = '<li><a href="#" title="' + sectionTitle + '" data-section-target="' + sectionNum + '" data-html="true" data-placement="left" data-toggle="tooltip" class="not-active scrollTo"><div class="hexagon"></div></a></li>';
+                    $(li).appendTo(navContainer);
+                    count++;
+                });
+                // If you are using the extension, it assumes you want to see the thing by default
+                // Never show just 1 pip because it looks wierd. This will only happen if you add sections dynamically.
+                if (count > 1) {
+                    this.enable();
+                }
+                // Wire in click events
+                var navigationItems = $('[data-section-nav-container] a.scrollTo');
+                navigationItems.on('click', function (event) {
+                    event.preventDefault();
+                    var sectionID = $(event.currentTarget).attr("data-section-target");
+                    var target = $("[data-nav-section=" + sectionID + "]");
+                    Midas.Core.currentPage.scrollAndCenterElement(target, 600);
+                    // set focus for accessibiliy
+                    target.find(":focusable:first.m-tooltip").focus(600);
+                    target.find(":focusable:first:not(.m-tooltip)").focus();
+                    $(".right-nav-hex").removeClass("toggled");
+                });
+                // Wire in mobile nav event
+                $(".right-nav-hex i").on("click", function (e) {
+                    $(".right-nav-hex").toggleClass("toggled");
+                });
+                $(window).on('scroll', function (e) {
+                    _this.updateSideNavigation();
+                });
+                // unobtrusively disable clicking on tooltip links
+                $("a.m-tooltip").on("click", function (e) {
+                    return false;
+                });
+            }
+            SectionNav.prototype.updateSideNavigation = function () {
+                var navigationSections = $("[data-nav-section]");
+                navigationSections.each(function () {
+                    var $this = $(this);
+                    var sectionId = $this.attr("data-nav-section");
+                    var sectionNav = $('.right-nav-hex [data-section-target=' + sectionId + ']');
+                    if (($this.offset().top - $(window).height() / 2 < $(window).scrollTop()) && ($this.offset().top + $this.height() - $(window).height() / 2 > $(window).scrollTop())) {
+                        sectionNav.addClass('active').removeClass('not-active');
+                    }
+                    else {
+                        sectionNav.removeClass('active').addClass('not-active');
+                    }
+                });
+            };
+            SectionNav.prototype.enable = function () {
+                var nav = $("[data-section-nav-container]");
+                if (!nav.hasClass("[data-section-nav-container]")) {
+                    nav.addClass("active");
+                }
+            };
+            SectionNav.enable = function () {
+                var nav = $("[data-section-nav-container]");
+                if (!nav.hasClass("[data-section-nav-container]")) {
+                    nav.addClass("active");
+                }
+            };
+            return SectionNav;
+        }());
+        Core.SectionNav = SectionNav;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    var sectionNav = new Midas.Core.SectionNav();
+});
+//# sourceMappingURL=midas.core.sectionnav.js.map

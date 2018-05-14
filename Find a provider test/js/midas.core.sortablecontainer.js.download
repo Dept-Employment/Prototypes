@@ -1,0 +1,548 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var SortableContainer = (function (_super) {
+            __extends(SortableContainer, _super);
+            function SortableContainer(element) {
+                _super.call(this, element, Core.ControlType.SortableContainer, {});
+            }
+            SortableContainer.prototype.initialise = function () {
+                var _this = this;
+                this.initialiseElement();
+                this.initialiseSortableItemElements();
+                this.createClearFixes();
+                Core.currentPage.responsiveHelper.bind(Midas.Core.ResponsiveEvents[Midas.Core.ResponsiveEvents.ScreenSizeChanged], function () {
+                    _this.removeClearFixes();
+                    _this.createClearFixes();
+                });
+            };
+            Object.defineProperty(SortableContainer.prototype, "rowElement", {
+                get: function () {
+                    return this.element.children('.row');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SortableContainer.prototype, "sortableItemElements", {
+                get: function () {
+                    return this.rowElement.first().find('[data-sortableitem]');
+                },
+                enumerable: true,
+                configurable: true
+            });
+            SortableContainer.prototype.getSortableItemElement = function (element) {
+                return element.closest('[data-sortableitem]');
+            };
+            SortableContainer.prototype.addSortableItem = function (sortableItemElement) {
+                this.removeClearFixes();
+                this.rowElement.append(sortableItemElement);
+                var sortableItem = this.initialiseSortableItemElement(sortableItemElement);
+                this.createClearFixes();
+                this.trigger(SortableContainerEvents[SortableContainerEvents.ItemAdded], { item: sortableItemElement });
+                return sortableItem;
+            };
+            SortableContainer.prototype.removeSortableItem = function (sortableItemElement) {
+                this.removeClearFixes();
+                sortableItemElement.remove();
+                this.createClearFixes();
+                this.trigger(SortableContainerEvents[SortableContainerEvents.ItemRemoved], { item: sortableItemElement });
+            };
+            SortableContainer.prototype.initialiseElement = function () {
+                this.element.toggleClass('m-sortablecontainer', true);
+            };
+            SortableContainer.prototype.initialiseSortableItemElements = function () {
+                var _this = this;
+                $.each(this.sortableItemElements, function (index, sortableItemElement) {
+                    _this.initialiseSortableItemElement($(sortableItemElement));
+                });
+            };
+            SortableContainer.prototype.initialiseSortableItemElement = function (sortableItemElement) {
+                var _this = this;
+                var sortableItem = new SortableItem(sortableItemElement);
+                var draggableOptions = {
+                    containment: 'parent',
+                    handle: '.m-draggable-handle, .panel-heading',
+                    helper: 'clone',
+                    scrollSensitivity: 40,
+                    scrollSpeed: 40,
+                    revert: true,
+                    revertDuration: 0
+                };
+                sortableItemElement.draggable(draggableOptions);
+                sortableItemElement.on("dragstart", function (event, ui) {
+                    // Only handle the event if they are dragging using the drag handle.
+                    // Also ensure that we don't handle bubbled events.
+                    if (ui != null && event.target === event.currentTarget) {
+                        var targetItem = $(event.target);
+                        // Create a drop placeholder used to indicate the drop area.
+                        _this.dropPlaceholder = $('<div>');
+                        _this.dropPlaceholder.addClass('m-draggable-placeholder');
+                        _this.dropPlaceholder.height(targetItem.height());
+                        var widgetColumnClasses = Core.currentPage.responsiveHelper.getColumnClasses(targetItem);
+                        for (var i = 0; i < widgetColumnClasses.length; ++i) {
+                            _this.dropPlaceholder.addClass(widgetColumnClasses[i]);
+                        }
+                        // Ensure that the helper is not picked up as a widget.
+                        ui.helper.removeAttr('data-sortableitem');
+                        // Replace the target sortable item with a drop placeholder.
+                        _this.dropPlaceholder.insertAfter(targetItem);
+                        targetItem.addClass('hidden');
+                        _this.removeClearFixes();
+                        _this.createDropTargets();
+                        _this.createClearFixes();
+                        // Populate the droppables collection. 
+                        _this._droppables = new Array();
+                        var targetItemColumnCount = Core.currentPage.responsiveHelper.getEffectiveColumnCount(targetItem);
+                        if (targetItemColumnCount === Core.currentPage.responsiveHelper.maxColumnCount) {
+                            // If the item being dragged is full width then we move it up / down based
+                            // on whether it is in the top half / bottom half of a row of items.
+                            var firstItem, lastItem, columnCount = 0, groupHeight = 0;
+                            _this.sortableItemElements.each(function (index, itemElement) {
+                                if (itemElement !== targetItem[0]) {
+                                    var item = $(itemElement).getSortableItem();
+                                    var itemColumnCount = Core.currentPage.responsiveHelper.getEffectiveColumnCount(item.element);
+                                    var tempColumnCount = columnCount + itemColumnCount;
+                                    if (tempColumnCount > Core.currentPage.responsiveHelper.maxColumnCount) {
+                                        _this._droppables.push(new SortableContainerDroppableRow(firstItem, lastItem, groupHeight));
+                                        columnCount = 0;
+                                    }
+                                    if (columnCount === 0) {
+                                        firstItem = item;
+                                        lastItem = item;
+                                        groupHeight = item.element.outerHeight();
+                                    }
+                                    else {
+                                        lastItem = item;
+                                        if (item.element.outerHeight() > groupHeight) {
+                                            groupHeight = item.element.outerHeight();
+                                        }
+                                    }
+                                    columnCount += Core.currentPage.responsiveHelper.getEffectiveColumnCount(item.element);
+                                    // Add the last row
+                                    if (index === (_this.sortableItemElements.length - 1)) {
+                                        _this._droppables.push(new SortableContainerDroppableRow(firstItem, lastItem, groupHeight));
+                                    }
+                                }
+                            });
+                        }
+                        else {
+                            // If the item being dragged is not full width then we move it up / down based
+                            // on whether it is in the left half / right half of a sortable item or it is
+                            // over a drop target element.
+                            _this.sortableItemElements.each(function (index, itemElement) {
+                                if (itemElement !== targetItem[0]) {
+                                    var item = $(itemElement).getSortableItem();
+                                    _this._droppables.push(new SortableContainerDroppableItem(item));
+                                }
+                            });
+                        }
+                    }
+                });
+                sortableItemElement.on("dragstop", function (event, ui) {
+                    // Only handle the event if they are dragging using the drag handle.
+                    if (ui != null) {
+                        var targetItem = $(event.target);
+                        _this.removeClearFixes();
+                        _this.removeDropTargets();
+                        // Replace the drop placeholder with the target sortable item.
+                        targetItem.removeAttr('style');
+                        targetItem.insertBefore(_this.dropPlaceholder);
+                        targetItem.removeClass('hidden');
+                        _this.dropPlaceholder.remove();
+                        _this.updateItemDisplayOrder(targetItem.getSortableItem());
+                        _this.createClearFixes();
+                    }
+                });
+                sortableItemElement.on("drag", function (event, ui) {
+                    // Only handle the event if they are dragging using the drag handle.
+                    if (ui != null) {
+                        var targetItem = $(event.target);
+                        var targetItemDraggable = targetItem.draggable("instance");
+                        var droppableFound = false;
+                        for (var _i = 0, _a = _this._droppables; _i < _a.length; _i++) {
+                            var droppable = _a[_i];
+                            if ((event.pageX >= droppable.getFirstHalfPosition().left) && (event.pageX <= (droppable.getFirstHalfPosition().left + droppable.getFirstHalfWidth()))
+                                && (event.pageY >= droppable.getFirstHalfPosition().top) && (event.pageY <= (droppable.getFirstHalfPosition().top + droppable.getFirstHalfHeight()))) {
+                                _this.removeClearFixes();
+                                _this.removeDropTargets();
+                                _this.dropPlaceholder.insertBefore(droppable.getInsertBeforeItem().element);
+                                _this.createDropTargets();
+                                _this.createClearFixes();
+                                targetItemDraggable._setContainment();
+                                droppableFound = true;
+                                break;
+                            }
+                            else if ((event.pageX >= droppable.getSecondHalfPosition().left) && (event.pageX <= (droppable.getSecondHalfPosition().left + droppable.getSecondHalfWidth()))
+                                && (event.pageY >= droppable.getSecondHalfPosition().top) && (event.pageY <= (droppable.getSecondHalfPosition().top + droppable.getSecondHalfHeight()))) {
+                                _this.removeClearFixes();
+                                _this.removeDropTargets();
+                                _this.dropPlaceholder.insertAfter(droppable.getInsertAfterItem().element);
+                                _this.createDropTargets();
+                                _this.createClearFixes();
+                                targetItemDraggable._setContainment();
+                                droppableFound = true;
+                                break;
+                            }
+                        }
+                        if (!droppableFound) {
+                            _this.rowElement.find('[data-droptarget]').each(function (index, dropTargetElement) {
+                                var dropTarget = $(dropTargetElement);
+                                // If we are mousing over a drop target replace it with a drop placeholder.
+                                if (event.pageX >= dropTarget.position().left && event.pageX <= (dropTarget.position().left + dropTarget.outerWidth())
+                                    && event.pageY >= dropTarget.position().top && event.pageY <= (dropTarget.position().top + dropTarget.outerHeight())) {
+                                    dropTarget.replaceWith(_this.dropPlaceholder);
+                                    _this.removeClearFixes();
+                                    _this.removeDropTargets();
+                                    _this.createDropTargets();
+                                    _this.createClearFixes();
+                                    targetItemDraggable._setContainment();
+                                }
+                            });
+                        }
+                    }
+                });
+                sortableItemElement.on("click", "[data-moveupbutton]", function (ce) {
+                    var button = $(ce.currentTarget);
+                    var sortableItemElement = _this.getSortableItemElement(button);
+                    if (sortableItemElement.length) {
+                        var previousSortableItemElement = sortableItemElement.prevAll("[data-sortableitem]:first");
+                        if (previousSortableItemElement.length) {
+                            _this.removeClearFixes();
+                            sortableItemElement.insertBefore(previousSortableItemElement.first());
+                            button.focus();
+                            _this.updateItemDisplayOrder(sortableItemElement.getSortableItem());
+                            _this.createClearFixes();
+                        }
+                    }
+                });
+                sortableItemElement.on("click", "[data-movedownbutton]", function (ce) {
+                    var button = $(ce.currentTarget);
+                    var sortableItemElement = _this.getSortableItemElement(button);
+                    if (sortableItemElement.length) {
+                        var nextSortableItemElement = sortableItemElement.nextAll("[data-sortableitem]:first");
+                        if (nextSortableItemElement.length) {
+                            _this.removeClearFixes();
+                            sortableItemElement.insertAfter(nextSortableItemElement.first());
+                            button.focus();
+                            _this.updateItemDisplayOrder(sortableItemElement.getSortableItem());
+                            _this.createClearFixes();
+                        }
+                    }
+                });
+                sortableItemElement.find(draggableOptions.handle).attr('title', 'Click to drag item');
+                return sortableItem;
+            };
+            SortableContainer.prototype.handleIfDragOver = function (event, firstHalfPosition, firstHalfWidth, firstHalfHeight, secondHalfPosition, secondHalfWidth, secondHalfHeight, insertBeforeElement, insertAfterElement) {
+                var targetItem = $(event.target);
+                var targetItemDraggable = targetItem.draggable("instance");
+                if ((event.pageX >= firstHalfPosition.left) && (event.pageX <= (firstHalfPosition.left + firstHalfWidth))
+                    && (event.pageY >= firstHalfPosition.top) && (event.pageY <= (firstHalfPosition.top + firstHalfHeight))) {
+                    this.removeClearFixes();
+                    this.removeDropTargets();
+                    this.dropPlaceholder.insertBefore(insertBeforeElement);
+                    this.createDropTargets();
+                    this.createClearFixes();
+                    targetItemDraggable._setContainment();
+                }
+                else if ((event.pageX >= secondHalfPosition.left) && (event.pageX <= (secondHalfPosition.left + secondHalfWidth))
+                    && (event.pageY >= secondHalfPosition.top) && (event.pageY <= (secondHalfPosition.top + secondHalfHeight))) {
+                    this.removeClearFixes();
+                    this.removeDropTargets();
+                    this.dropPlaceholder.insertAfter(insertAfterElement);
+                    this.createDropTargets();
+                    this.createClearFixes();
+                    targetItemDraggable._setContainment();
+                }
+            };
+            SortableContainer.prototype.getSortableItemElementById = function (itemId) {
+                var matchingItem = null;
+                this.sortableItemElements.each(function (index, itemElement) {
+                    var item = $(itemElement).getSortableItem();
+                    if (item.itemId === itemId) {
+                        matchingItem = item.element;
+                    }
+                });
+                return matchingItem;
+            };
+            SortableContainer.prototype.getItemDisplayOrder = function (item) {
+                return this.sortableItemElements.index(item.element) + 1;
+            };
+            SortableContainer.prototype.updateItemDisplayOrder = function (item) {
+                var _this = this;
+                var request = {
+                    ItemId: item.itemId,
+                    DisplayOrder: this.getItemDisplayOrder(item),
+                    Version: item.version
+                };
+                this.trigger(SortableContainerEvents[SortableContainerEvents.ItemUpdating], { item: item, data: request });
+                if (this.settings.update != null && this.settings.update.url != null) {
+                    $.post({
+                        url: this.settings.update.url,
+                        data: request,
+                        global: false,
+                        beforeSend: function (request, settings) {
+                            var ajax = new Midas.Core.Ajax();
+                            ajax.beforeSend(request, settings);
+                        },
+                        success: function (updateResult) {
+                            if (updateResult.Status === 1) {
+                                var response = updateResult.AdditionalData;
+                                item.version = response.Version;
+                                _this.trigger(SortableContainerEvents[SortableContainerEvents.ItemUpdated], { item: item, data: response });
+                            }
+                            else {
+                                Midas.Core.currentPage.showErrorModal("We were unable to complete your request. Click 'OK' to refresh the page.", true);
+                            }
+                        },
+                        error: function () {
+                            Midas.Core.currentPage.showGenericErrorModal();
+                        }
+                    });
+                }
+                else {
+                    var response = {
+                        ItemId: request.ItemId,
+                        DisplayOrder: request.DisplayOrder,
+                        Version: request.Version
+                    };
+                    this.trigger(SortableContainerEvents[SortableContainerEvents.ItemUpdated], { item: item, data: response });
+                }
+            };
+            SortableContainer.prototype.createDropTargets = function () {
+                var _this = this;
+                var totalColumns = 0;
+                var maxColumns = Core.currentPage.responsiveHelper.maxColumnCount;
+                var children = this.rowElement.children(':visible:not(.ui-draggable-dragging)');
+                children.each(function (index, childElement) {
+                    var child = $(childElement);
+                    if (!child.hasClass('clearfix')) {
+                        var dropTarget, dropTargetHeightElement;
+                        var screenSize = Core.currentPage.responsiveHelper.getCurrentScreenSize();
+                        var columns = Core.currentPage.responsiveHelper.getEffectiveColumnCount(child);
+                        var tempColumns = totalColumns + columns;
+                        if (tempColumns > maxColumns) {
+                            if (totalColumns < maxColumns) {
+                                dropTargetHeightElement = child.prevAll('.m-sortableitem:visible,.m-draggable-placeholder').first();
+                                dropTarget = $('<div>');
+                                dropTarget.addClass(Core.currentPage.responsiveHelper.getColumnClass(screenSize, (maxColumns - totalColumns)));
+                                dropTarget.addClass('m-draggable-droptarget');
+                                dropTarget.height(dropTargetHeightElement.height());
+                                dropTarget.attr('data-droptarget', '');
+                                dropTarget.insertBefore(child);
+                            }
+                            totalColumns = columns;
+                        }
+                        else if (tempColumns === maxColumns) {
+                            totalColumns = 0;
+                        }
+                        else {
+                            totalColumns = tempColumns;
+                        }
+                        if (index === (children.length - 1)) {
+                            // If the last row of sortable items does not take up all columns then add a drop target
+                            // to the remaining columns to make it easier to drop an item in the last position.
+                            if (totalColumns > 0 && totalColumns < maxColumns && child.is('.m-sortableitem')) {
+                                dropTargetHeightElement = child;
+                                dropTarget = $('<div>');
+                                dropTarget.addClass(Core.currentPage.responsiveHelper.getColumnClass(screenSize, (maxColumns - totalColumns)));
+                                dropTarget.height(dropTargetHeightElement.height());
+                                dropTarget.attr('data-droptarget', '');
+                                _this.rowElement.append(dropTarget);
+                            }
+                        }
+                    }
+                });
+            };
+            SortableContainer.prototype.removeDropTargets = function () {
+                this.rowElement.find('[data-droptarget]').remove();
+            };
+            SortableContainer.prototype.createClearFixes = function () {
+                var totalColumns = 0;
+                var children = this.rowElement.children(':visible:not(.ui-draggable-dragging)');
+                children.each(function (index, childElement) {
+                    var child = $(childElement);
+                    var columns = Core.currentPage.responsiveHelper.getEffectiveColumnCount(child);
+                    var tempColumns = totalColumns + columns;
+                    if (tempColumns > 12) {
+                        var clearFix = $('<div>');
+                        clearFix.addClass('clearfix');
+                        clearFix.insertBefore(child);
+                        totalColumns = columns;
+                    }
+                    else {
+                        totalColumns = tempColumns;
+                    }
+                });
+            };
+            SortableContainer.prototype.removeClearFixes = function () {
+                this.rowElement.find('.clearfix').remove();
+            };
+            return SortableContainer;
+        }(Core.Control));
+        Core.SortableContainer = SortableContainer;
+        var SortableItem = (function (_super) {
+            __extends(SortableItem, _super);
+            function SortableItem(element) {
+                _super.call(this, element, Core.ControlType.SortableItem, {});
+            }
+            SortableItem.prototype.initialise = function () {
+                this.element.toggleClass('m-sortableitem', true);
+                this.setItemData(this.element.data("sortableitem"));
+            };
+            Object.defineProperty(SortableItem.prototype, "itemId", {
+                get: function () {
+                    return this.getItemData().Id;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SortableItem.prototype, "version", {
+                get: function () {
+                    return this.getItemData().Version;
+                },
+                set: function (version) {
+                    var itemData = this.getItemData();
+                    itemData.Version = version;
+                    this.setItemData(itemData);
+                },
+                enumerable: true,
+                configurable: true
+            });
+            SortableItem.prototype.getItemData = function () {
+                return this.element.data('sortableitemdata');
+            };
+            SortableItem.prototype.setItemData = function (itemData) {
+                this.element.data('sortableitemdata', itemData);
+            };
+            return SortableItem;
+        }(Core.Control));
+        Core.SortableItem = SortableItem;
+        var SortableContainerDroppableItem = (function () {
+            function SortableContainerDroppableItem(item) {
+                this._item = item;
+            }
+            SortableContainerDroppableItem.prototype.getInsertBeforeItem = function () {
+                return this._item;
+            };
+            SortableContainerDroppableItem.prototype.getInsertAfterItem = function () {
+                return this._item;
+            };
+            SortableContainerDroppableItem.prototype.getFirstHalfPosition = function () {
+                return {
+                    left: this._item.element.position().left,
+                    top: this._item.element.position().top
+                };
+            };
+            SortableContainerDroppableItem.prototype.getFirstHalfWidth = function () {
+                return this._item.element.outerWidth() / 2;
+            };
+            SortableContainerDroppableItem.prototype.getFirstHalfHeight = function () {
+                return this._item.element.outerHeight();
+            };
+            SortableContainerDroppableItem.prototype.getSecondHalfPosition = function () {
+                return {
+                    left: this._item.element.position().left + this.getFirstHalfWidth(),
+                    top: this._item.element.position().top
+                };
+            };
+            SortableContainerDroppableItem.prototype.getSecondHalfWidth = function () {
+                return this._item.element.outerWidth() / 2;
+            };
+            SortableContainerDroppableItem.prototype.getSecondHalfHeight = function () {
+                return this._item.element.outerHeight();
+            };
+            return SortableContainerDroppableItem;
+        }());
+        Core.SortableContainerDroppableItem = SortableContainerDroppableItem;
+        var SortableContainerDroppableRow = (function () {
+            function SortableContainerDroppableRow(firstItem, lastItem, height) {
+                this._firstItem = firstItem;
+                this._lastItem = lastItem;
+                this._height = height;
+            }
+            SortableContainerDroppableRow.prototype.getInsertBeforeItem = function () {
+                return this._firstItem;
+            };
+            SortableContainerDroppableRow.prototype.getInsertAfterItem = function () {
+                return this._lastItem;
+            };
+            SortableContainerDroppableRow.prototype.getFirstHalfPosition = function () {
+                return {
+                    left: this._firstItem.element.position().left,
+                    top: this._firstItem.element.position().top
+                };
+            };
+            SortableContainerDroppableRow.prototype.getFirstHalfWidth = function () {
+                return this._firstItem.element.parent().outerWidth();
+            };
+            SortableContainerDroppableRow.prototype.getFirstHalfHeight = function () {
+                return this._height / 2;
+            };
+            SortableContainerDroppableRow.prototype.getSecondHalfPosition = function () {
+                return {
+                    left: this._firstItem.element.position().left,
+                    top: this._firstItem.element.position().top + this.getFirstHalfHeight()
+                };
+            };
+            SortableContainerDroppableRow.prototype.getSecondHalfWidth = function () {
+                return this._firstItem.element.parent().outerWidth();
+            };
+            SortableContainerDroppableRow.prototype.getSecondHalfHeight = function () {
+                return this._height / 2;
+            };
+            return SortableContainerDroppableRow;
+        }());
+        Core.SortableContainerDroppableRow = SortableContainerDroppableRow;
+        var SortableItemData = (function () {
+            function SortableItemData() {
+            }
+            return SortableItemData;
+        }());
+        Core.SortableItemData = SortableItemData;
+        (function (SortableContainerEvents) {
+            SortableContainerEvents[SortableContainerEvents["ItemAdded"] = 0] = "ItemAdded";
+            SortableContainerEvents[SortableContainerEvents["ItemRemoved"] = 1] = "ItemRemoved";
+            SortableContainerEvents[SortableContainerEvents["ItemUpdating"] = 2] = "ItemUpdating";
+            SortableContainerEvents[SortableContainerEvents["ItemUpdated"] = 3] = "ItemUpdated";
+        })(Core.SortableContainerEvents || (Core.SortableContainerEvents = {}));
+        var SortableContainerEvents = Core.SortableContainerEvents;
+        var SortableItemUpdateRequest = (function () {
+            function SortableItemUpdateRequest() {
+            }
+            return SortableItemUpdateRequest;
+        }());
+        Core.SortableItemUpdateRequest = SortableItemUpdateRequest;
+        var SortableItemUpdateResponse = (function () {
+            function SortableItemUpdateResponse() {
+            }
+            return SortableItemUpdateResponse;
+        }());
+        Core.SortableItemUpdateResponse = SortableItemUpdateResponse;
+        var SortableContainerInitialiser = (function () {
+            function SortableContainerInitialiser() {
+                this.ready = function () {
+                    $(document).find('[data-sortablecontainer]').each(function (index, element) {
+                        var sortableContainer = new SortableContainer($(element));
+                        sortableContainer.bind(SortableContainerEvents[SortableContainerEvents.ItemAdded], function (e) {
+                            Midas.Core.currentPage.initialise($(e.data.item));
+                        });
+                    });
+                };
+            }
+            return SortableContainerInitialiser;
+        }());
+        Core.SortableContainerInitialiser = SortableContainerInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+    new Midas.Core.SortableContainerInitialiser().ready();
+});
+//# sourceMappingURL=midas.core.sortablecontainer.js.map

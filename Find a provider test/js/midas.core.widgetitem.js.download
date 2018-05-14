@@ -1,0 +1,63 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var WidgetItem = (function (_super) {
+            __extends(WidgetItem, _super);
+            function WidgetItem(widgetItemElement) {
+                _super.call(this, widgetItemElement, Core.ControlType.WidgetItem, {}, true);
+            }
+            WidgetItem.prototype.initialise = function () {
+                this._widgetEventDependencies = new Array();
+            };
+            Object.defineProperty(WidgetItem.prototype, "id", {
+                get: function () {
+                    return WidgetItemData.getForElement(this.element).Id;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetItem.prototype, "widgetTypeName", {
+                get: function () {
+                    return WidgetItemData.getForElement(this.element).WidgetTypeName;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(WidgetItem.prototype, "version", {
+                get: function () {
+                    return WidgetItemData.getForElement(this.element).Version;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            WidgetItem.prototype.getWidgetEventDependencies = function () {
+                return this._widgetEventDependencies;
+            };
+            WidgetItem.prototype.addWidgetEventDependency = function (widgetEvent) {
+                this._widgetEventDependencies.push(widgetEvent);
+            };
+            WidgetItem.prototype.destroy = function () {
+            };
+            return WidgetItem;
+        }(Core.Control));
+        Core.WidgetItem = WidgetItem;
+        var WidgetItemData = (function () {
+            function WidgetItemData() {
+            }
+            WidgetItemData.getForElement = function (widgetItemElement) {
+                return widgetItemElement.data('widgetitem');
+            };
+            return WidgetItemData;
+        }());
+        Core.WidgetItemData = WidgetItemData;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.widgetitem.js.map

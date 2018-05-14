@@ -1,0 +1,367 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="typings/midas.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var Pager = (function (_super) {
+            __extends(Pager, _super);
+            function Pager(element, settings) {
+                _super.call(this, element, Core.ControlType.Pager, $.extend(true, {}, {
+                    buttonCount: 10,
+                    autoBind: true,
+                    numeric: true,
+                    info: true,
+                    input: false,
+                    previousNext: true,
+                    pageSizes: false,
+                    refresh: false,
+                    messages: {
+                        allPages: "All",
+                        display: "{0} - {1} of {2} items",
+                        empty: "No items to display",
+                        page: "Page",
+                        of: "of {0}",
+                        itemsPerPage: "items per page",
+                        first: "Go to the first page",
+                        previous: "Go to the previous page",
+                        next: "Go to the next page",
+                        last: "Go to the last page",
+                        refresh: "Refresh",
+                        morePages: "More pages"
+                    }
+                }, settings));
+            }
+            Pager.prototype.initialise = function () {
+                var settings = this.settings;
+                this.dataSource = Core.DataSource.create(settings.dataSource);
+                this.linkTemplate = this.renderLinkElement;
+                this.selectTemplate = this.renderSelectElement;
+                this.currentPageTemplate = this.renderCurrentPageElement;
+                this.iconTemplate = this.renderIconElement;
+                var page = this.page();
+                var totalPages = this.totalPages();
+                this.refreshHandler = $.proxy(this.refresh, this);
+                this.dataSource.bind(Core.DataSourceEvents[Core.DataSourceEvents.Change], this.refreshHandler);
+                if (settings.previousNext) {
+                    if (!this.element.find(Pager.firstSelector).length) {
+                        this.element.append(icon(this.iconTemplate, Pager.first, settings.messages.first, Pager.firstSelector.substring(1)));
+                        first(this.element, page);
+                    }
+                    if (!this.element.find(Pager.prevSelector).length) {
+                        this.element.append(icon(this.iconTemplate, Pager.prev, settings.messages.previous, Pager.prevSelector.substring(1)));
+                        prev(this.element, page);
+                    }
+                }
+                if (settings.numeric) {
+                    this.list = this.element.find(".m-pager-numbers");
+                    if (!this.list.length) {
+                        this.list = $('<ul class="k-pager-numbers k-reset m-pager-numbers" />').appendTo(this.element);
+                    }
+                }
+                if (settings.input) {
+                    if (!this.element.find(".k-pager-input").length) {
+                        this.element.append('<span class="k-pager-input k-label">' +
+                            settings.messages.page +
+                            '<input class="k-textbox">' +
+                            String.format(settings.messages.of, totalPages) +
+                            '</span>');
+                    }
+                    this.element.on("keydown" + Pager.nameSpace, ".k-pager-input input", $.proxy(this.onKeyDown, this));
+                }
+                if (settings.previousNext) {
+                    if (!this.element.find(Pager.nextSelector).length) {
+                        this.element.append(icon(this.iconTemplate, Pager.next, settings.messages.next, Pager.nextSelector.substring(1)));
+                        next(this.element, page, totalPages);
+                    }
+                    if (!this.element.find(Pager.lastSelector).length) {
+                        this.element.append(icon(this.iconTemplate, Pager.last, settings.messages.last, Pager.lastSelector.substring(1)));
+                        last(this.element, page, totalPages);
+                    }
+                }
+                if (settings.pageSizes) {
+                    if (!this.element.find(".k-pager-sizes").length) {
+                        var pageSizes = settings.pageSizes.length ? settings.pageSizes : ["all", 5, 10, 20];
+                        var pageItems = $.map(pageSizes, function (size) {
+                            if (size.toLowerCase && size.toLowerCase() === "all") {
+                                return "<option value='all'>" + settings.messages.allPages + "</option>";
+                            }
+                            return "<option>" + size + "</option>";
+                        });
+                        $('<span class="k-pager-sizes k-label"><select/>' + settings.messages.itemsPerPage + "</span>")
+                            .appendTo(this.element)
+                            .find("select").html(pageItems.join("")).addClass('form-control').end()
+                            .appendTo(this.element);
+                    }
+                    this.element.find(".k-pager-sizes select").val(this.pageSize().toString());
+                    this.element.on("change" + Pager.nameSpace, ".k-pager-sizes select", $.proxy(this.onChange, this));
+                }
+                if (settings.refresh) {
+                    if (!this.element.find(".k-pager-refresh").length) {
+                        this.element.append('<a href="#" class="k-pager-refresh k-link" title="' + settings.messages.refresh +
+                            '"><span class="k-icon k-i-refresh">' + settings.messages.refresh + "</span></a>");
+                    }
+                    this.element.on("click" + Pager.nameSpace, ".k-pager-refresh", $.proxy(this.onRefreshClick, this));
+                }
+                if (settings.info) {
+                    if (!this.element.find(".k-pager-info").length) {
+                        this.element.append('<span class="k-pager-info k-label" />');
+                    }
+                }
+                this.element
+                    .on("click" + Pager.nameSpace, "a", $.proxy(this.onClick, this))
+                    .addClass("k-pager-wrap k-widget k-floatwrap m-pager-wrap");
+                this.element.on("click" + Pager.nameSpace, ".k-current-page", $.proxy(this.onToggleActive, this));
+                if (settings.autoBind) {
+                    this.refresh();
+                }
+            };
+            Object.defineProperty(Pager.prototype, "dataSource", {
+                get: function () {
+                    return this.dataSourceField;
+                },
+                set: function (dataSource) {
+                    this.dataSourceField = dataSource;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(Pager.prototype, "list", {
+                get: function () {
+                    return this.listField;
+                },
+                set: function (list) {
+                    this.listField = list;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Pager.prototype.refresh = function (e) {
+                if (e === void 0) { e = null; }
+                var idx, end, start = 1, reminder, page = this.page(), html = "", settings = this.settings, pageSize = this.pageSize(), total = this.dataSource.total, totalPages = this.totalPages(), linkTemplate = this.linkTemplate, buttonCount = settings.buttonCount;
+                if (e && e.data.action == "itemchange") {
+                    return;
+                }
+                if (settings.numeric) {
+                    if (page > buttonCount) {
+                        reminder = (page % buttonCount);
+                        start = (reminder === 0) ? (page - buttonCount) + 1 : (page - reminder) + 1;
+                    }
+                    end = Math.min((start + buttonCount) - 1, totalPages);
+                    if (start > 1) {
+                        html += button(linkTemplate, start - 1, "...", false, settings.messages.morePages);
+                    }
+                    for (idx = start; idx <= end; idx++) {
+                        html += button(idx == page ? this.selectTemplate : linkTemplate, idx, idx, true);
+                    }
+                    if (end < totalPages) {
+                        html += button(linkTemplate, idx, "...", false, settings.messages.morePages);
+                    }
+                    if (html === "") {
+                        html = this.selectTemplate({ text: 0 });
+                    }
+                    html = this.currentPageTemplate({ text: page }) + html;
+                    this.list.removeClass("k-state-expanded").html(html);
+                }
+                if (settings.info) {
+                    if (total > 0) {
+                        html = String.format(settings.messages.display, (page - 1) * pageSize + 1, // first item in the page
+                        Math.min(page * pageSize, total), // last item in the page
+                        total);
+                    }
+                    else {
+                        html = settings.messages.empty;
+                    }
+                    this.element.find(".k-pager-info").html(html);
+                }
+                if (settings.input) {
+                    this.element
+                        .find(".k-pager-input")
+                        .html(settings.messages.page +
+                        '<input class="k-textbox">' +
+                        String.format(settings.messages.of, totalPages))
+                        .find("input")
+                        .val(page.toString())
+                        .attr("disabled", (total < 1).toString())
+                        .toggleClass("k-state-disabled", total < 1);
+                }
+                if (settings.previousNext) {
+                    first(this.element, page);
+                    prev(this.element, page);
+                    next(this.element, page, totalPages);
+                    last(this.element, page, totalPages);
+                }
+                if (settings.pageSizes) {
+                    var hasAll = this.element.find(".k-pager-sizes option[value='all']").length > 0;
+                    var selectAll = hasAll && pageSize === this.dataSource.total;
+                    var text = pageSize;
+                    var pageSizeValue = pageSize.toString();
+                    if (selectAll) {
+                        pageSizeValue = "all";
+                        text = settings.messages.allPages;
+                    }
+                    this.element
+                        .find(".k-pager-sizes select")
+                        .val(pageSizeValue)
+                        .filter("[" + "data-role" + "=dropdownlist]"); // handles custom values
+                }
+            };
+            Pager.prototype.totalPages = function () {
+                return Math.ceil((this.dataSource.total || 0) / (this.pageSize() || 1));
+            };
+            Pager.prototype.page = function (page) {
+                if (page === void 0) { page = null; }
+                if (page != null) {
+                    this.dataSource.page = page;
+                    this.trigger(Core.DataSourceEvents[Core.DataSourceEvents.Change], { index: page });
+                }
+                else {
+                    if (this.dataSource.total > 0) {
+                        return this.dataSource.page;
+                    }
+                    else {
+                        return 0;
+                    }
+                }
+                return null;
+            };
+            Pager.prototype.pageSize = function () {
+                return this.dataSource.pageSize || this.dataSource.total;
+            };
+            Pager.prototype.onKeyDown = function (e) {
+                if (e.keyCode === Core.KeyCode.Enter) {
+                    var input = this.element.find(".k-pager-input").find("input"), page = parseInt(input.val(), 10);
+                    if (isNaN(page) || page < 1 || page > this.totalPages()) {
+                        page = this.page();
+                    }
+                    input.val(page.toString());
+                    this.page(page);
+                }
+            };
+            Pager.prototype.onRefreshClick = function (e) {
+                e.preventDefault();
+                this.dataSource.read();
+            };
+            Pager.prototype.onChange = function (e) {
+                var value = e.currentTarget.value;
+                var pageSize = parseInt(value, 10);
+                var dataSource = this.dataSource;
+                if (!isNaN(pageSize)) {
+                    dataSource.pageSize = pageSize;
+                }
+                else if ((value + "").toLowerCase() == "all") {
+                    dataSource.pageSize = dataSource.total;
+                }
+            };
+            Pager.prototype.onToggleActive = function (e) {
+                this.list.toggleClass("k-state-expanded");
+            };
+            Pager.prototype.onClick = function (e) {
+                var target = $(e.currentTarget);
+                e.preventDefault();
+                if (!target.is(".k-state-disabled")) {
+                    this.page(parseInt(target.attr("data-page")));
+                }
+            };
+            Pager.prototype.renderSelectElement = function (data) {
+                var element = $('<span class="k-state-selected"></span>').text(data.text);
+                element = $('<li></li>').append(element);
+                return $('<div></div>').append(element).html();
+            };
+            Pager.prototype.renderCurrentPageElement = function (data) {
+                var element = $('<span class="k-link k-pager-nav"></span>').text(data.text);
+                element = $('<li class="k-current-page"></li>').append(element);
+                return $('<div></div>').append(element).html();
+            };
+            Pager.prototype.renderLinkElement = function (data) {
+                var element = $('<a tabindex="-1" href="#" class="k-link"></a>').text(data.text);
+                element.attr('data-page', data.idx);
+                if (data.title != null && data.title != "") {
+                    element.attr('title', data.title);
+                }
+                element = $('<li></li>').append(element);
+                return $('<div></div>').append(element).html();
+            };
+            Pager.prototype.renderIconElement = function (data) {
+                var element = $('<span class="k-icon"></span>').text(data.text);
+                element.addClass(data.className);
+                element = $('<a href="#" class="k-link k-pager-nav"></a>').append(element);
+                element.addClass(data.wrapClassName);
+                if (data.title != null) {
+                    element.attr('title', data.title);
+                }
+                return $('<div></div>').append(element).html();
+            };
+            Pager.prototype.destroy = function () {
+                _super.prototype.destroy.call(this);
+                this.element.off(Pager.nameSpace);
+                this.dataSource.unbind(Core.DataSourceEvents[Core.DataSourceEvents.Change], this.refreshHandler);
+                this.refreshHandler = null;
+                this.list = null;
+            };
+            Pager.nameSpace = ".corePager";
+            Pager.first = ".k-i-seek-w";
+            Pager.firstSelector = ".k-pager-first";
+            Pager.last = ".k-i-seek-e";
+            Pager.lastSelector = ".k-pager-last";
+            Pager.prev = ".k-i-arrow-w";
+            Pager.prevSelector = ".k-pager-previous";
+            Pager.next = ".k-i-arrow-e";
+            Pager.nextSelector = ".k-pager-next";
+            return Pager;
+        }(Core.Control));
+        Core.Pager = Pager;
+        function button(template, idx, text, numeric, title) {
+            if (title === void 0) { title = null; }
+            return template({
+                idx: idx,
+                text: text,
+                numeric: numeric,
+                title: title || ""
+            });
+        }
+        function icon(template, className, text, wrapClassName) {
+            return template({
+                className: className.substring(1),
+                text: text,
+                wrapClassName: wrapClassName || ""
+            });
+        }
+        function update(element, selector, page, disabled) {
+            var pageItem = element.find(selector)
+                .attr("data-page", page)
+                .attr("tabindex", -1)
+                .toggleClass("k-state-disabled", disabled);
+            if (!disabled) {
+                pageItem.removeAttr("tabindex");
+            }
+        }
+        function first(element, page) {
+            update(element, Pager.firstSelector, 1, page <= 1);
+        }
+        function prev(element, page) {
+            update(element, Pager.prevSelector, Math.max(1, page - 1), page <= 1);
+        }
+        function next(element, page, totalPages) {
+            update(element, Pager.nextSelector, Math.min(totalPages, page + 1), page >= totalPages);
+        }
+        function last(element, page, totalPages) {
+            update(element, Pager.lastSelector, totalPages, page >= totalPages);
+        }
+        var PagerInitialiser = (function () {
+            function PagerInitialiser() {
+                this.ready = function () {
+                };
+            }
+            return PagerInitialiser;
+        }());
+        Core.PagerInitialiser = PagerInitialiser;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=midas.core.pager.js.map

@@ -1,0 +1,29 @@
+/// <reference path ="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var ScrollLinks = (function () {
+            function ScrollLinks() {
+            }
+            ScrollLinks.prototype.ready = function () {
+                this.scrollLinks = $('.scroll-link');
+                this.scrollLinks.click(this.scroll);
+            };
+            ScrollLinks.prototype.scroll = function (e) {
+                var destinationClass = $(e.currentTarget).attr('href').replace('#', '.');
+                var navHeight = $('nav').first().outerHeight();
+                var destScroll = $(destinationClass).offset().top - navHeight;
+                if ($(window).scrollTop() != destScroll) {
+                    $('html, body').stop().animate({ scrollTop: destScroll }, 1000);
+                }
+            };
+            return ScrollLinks;
+        }());
+        Core.ScrollLinks = ScrollLinks;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+});
+//# sourceMappingURL=midas.core.ScrollLinks.js.map
