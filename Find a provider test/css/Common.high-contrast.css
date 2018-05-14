@@ -1,0 +1,93 @@
+﻿.careerprofile .btn.m-btn {
+  width: auto;
+}
+.heading {
+  background-image: url('../../../../Content/Content/images/header-image-white.png');
+  background-color: #eeeeee;
+  background-repeat: no-repeat;
+  background-position: top left;
+  color: #474c55;
+  padding: 20px 0;
+}
+.heading .breadcrumb > .active {
+  color: #006491;
+  font-weight: 300;
+}
+.heading.heading-img {
+  background-image: none;
+  background-color: #474c55;
+  color: #ffffff;
+  font-weight: 400;
+}
+.heading.heading-img .alert a {
+  color: #006491;
+  text-decoration: underline;
+}
+.heading.heading-img .alert a:hover,
+.heading.heading-img .alert a:focus,
+.heading.heading-img .alert a:active {
+  text-decoration: none;
+}
+.heading.heading-img .breadcrumb {
+  background: none;
+  padding: 0;
+}
+.heading.heading-img .breadcrumb a {
+  text-decoration: underline;
+  color: #ffffff;
+}
+.heading.heading-img .breadcrumb a:hover,
+.heading.heading-img .breadcrumb a:focus {
+  text-decoration: none;
+}
+.heading.heading-img .breadcrumb > .active {
+  color: #ffffff;
+}
+.heading.heading-img h1 {
+  text-shadow: 2px 1px 4px rgba(0, 0, 0, 0.6);
+}
+.heading.heading-img h1 + p {
+  text-shadow: 2px 1px 4px rgba(0, 0, 0, 0.6);
+}
+.heading nav .label {
+  color: #ffffff;
+}
+.heading nav ul {
+  display: inline-block;
+  width: 65%;
+}
+.heading nav ul:first-child {
+  width: 30%;
+}
+.heading nav li {
+  padding: 2px;
+}
+.heading nav li.active {
+  font-weight: 500;
+}
+.heading.heading-img {
+  background-position: 100% 75%;
+}
+.profilepicture {
+  width: 100%;
+}
+/* Temp styles - Remove once full set of styles are in JobSearch */
+.navbar-secure {
+  display: block;
+}
+.validation-msg-adjustment {
+  height: 20px;
+}
+/* Retina-ize images/icons */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  /* logo */
+  /*    .navbar-brand { background-image: url(../img/logo@2x.png) !important; background-repeat: no-repeat !important; background-size: 97px 29px !important; }*/
+}
+/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+/* Jobactive colors */
+/* Built in bootstrap colors */
+/*# sourceMappingURL=Common.high-contrast.css.map */

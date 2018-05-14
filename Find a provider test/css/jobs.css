@@ -1,0 +1,50 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.result {
+  background: #fff;
+  border: 2px solid #85c8d8;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 15px 20px;
+  margin: 5px 0;
+  float: left;
+  width: 100%;
+  clear: both;
+  position: relative;
+  min-height: 260px;
+}
+.result .result-title {
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 10px;
+  padding-right: 20px;
+  border-bottom: 1px solid #ddd;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result .dogear {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-top: 40px solid transparent;
+  border-left: 40px solid transparent;
+  border-right: 40px solid #85c8d8;
+  clear: both;
+}
+.result .upCaseSuburb {
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+.result .panel-body .row .label.label-warning {
+  font-size: 100%;
+}
+.result .provider-logo {
+  max-height: 80px;
+}

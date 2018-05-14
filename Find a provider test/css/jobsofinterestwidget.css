@@ -1,0 +1,105 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.interest-container .panel-heading {
+  border-bottom: none;
+}
+.interest-container .panel-heading h2 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.interest-container .panel-body {
+  padding-left: 0;
+  padding-right: 0;
+}
+.interest-container .result {
+  background: #fff;
+  border: 2px solid #85c8d8;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 15px 20px;
+  margin: 5px 0;
+  float: left;
+  width: 100%;
+  clear: both;
+  position: relative;
+}
+.interest-container .result .dogear {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-top: 40px solid transparent;
+  border-left: 40px solid transparent;
+  border-right: 40px solid #85c8d8;
+  clear: both;
+}
+.interest-container .result .favouriteicon {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+.interest-container .result .result-title {
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 10px;
+  padding-right: 20px;
+  border-bottom: 1px solid #ddd;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.interest-container .result .result-title .favouriteicon {
+  position: static;
+}
+.interest-container .result .fa.remove-item {
+  right: 20px;
+  position: absolute;
+}
+.interest-container .result .job-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.interest-container .result .job-details {
+  float: left;
+  width: 75%;
+  padding-right: 15px;
+}
+.interest-container .result .job-details .upCaseSuburb {
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+.interest-container .result .job-details .srch-added,
+.interest-container .result .job-details .srch-modified,
+.interest-container .result .job-details .srch-source {
+  font-size: 14px;
+  display: none;
+}
+.interest-container .result .job-details p {
+  margin: 10px 0;
+  font-size: 14px;
+}
+.interest-container .result .result__actions {
+  float: left;
+  width: 25%;
+  margin-top: 5px;
+}
+.interest-container .result .result__actions img {
+  max-width: 100%;
+}
+@media (min-width: 768px) {
+}
+@media (min-width: 1200px) {
+}
+@media print {
+}
+/* Retina-ize images/icons */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  /* logo */
+  /*    .navbar-brand { background-image: url(../img/logo@2x.png) !important; background-repeat: no-repeat !important; background-size: 97px 29px !important; }*/
+}
