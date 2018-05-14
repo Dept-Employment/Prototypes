@@ -1,0 +1,51 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var LatestMessagesWidgetItem = (function (_super) {
+            __extends(LatestMessagesWidgetItem, _super);
+            function LatestMessagesWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            LatestMessagesWidgetItem.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                var latestMessagesLoadingElement = this.element.find('#LatestMessagesLoadingPanel');
+                var latestMessagesLoadingPanel = latestMessagesLoadingElement.getAjaxLoadingPanel();
+                latestMessagesLoadingPanel.element.on('click', 'a[data-openmessage]', function (e) {
+                    var target = $(e.currentTarget);
+                    var messageElement = target.closest('[data-messageid]');
+                    var messageRead = messageElement.data('messageread');
+                    if (!messageRead) {
+                        $.post(target.data('controlleractionurl'), { messageId: messageElement.data('messageid') }, function (result) {
+                            var unreadMessages = result > 0;
+                            latestMessagesLoadingPanel.element.find('#InboxViewInboxButton').toggleClass('nounread', !unreadMessages);
+                            latestMessagesLoadingPanel.element.find('#InboxViewInboxButton').find('.badge').text(result + " unread");
+                            messageElement.data('messageread', true);
+                            messageElement.find('.li-title').toggleClass('unread', false).toggleClass('read', true);
+                        });
+                    }
+                });
+                latestMessagesLoadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    new Midas.Core.GoogleAnalyticsTracker().elementReady(latestMessagesLoadingElement);
+                });
+            };
+            return LatestMessagesWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.LatestMessagesWidgetItem = LatestMessagesWidgetItem;
+        var LatestMessagesWidgetItemInitialiser = (function () {
+            function LatestMessagesWidgetItemInitialiser() {
+            }
+            LatestMessagesWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new LatestMessagesWidgetItem(widgetItemElement);
+            };
+            return LatestMessagesWidgetItemInitialiser;
+        }());
+        Widgets.LatestMessagesWidgetItemInitialiser = LatestMessagesWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=LatestMessagesWidget.js.map

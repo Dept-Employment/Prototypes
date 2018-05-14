@@ -1,0 +1,44 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+/// <reference path="../../../../../Scripts/typings/jquery/jquery.d.ts" />
+/// <reference path="../../../../../Scripts/typings/jqueryui/jqueryui.d.ts" />
+/// <reference path="../../../../../Scripts/typings/jquery.validation/jquery.validation.d.ts" />
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var FindProvidersWidgetItem = (function (_super) {
+            __extends(FindProvidersWidgetItem, _super);
+            function FindProvidersWidgetItem() {
+                _super.apply(this, arguments);
+                this.findProvidersNearMe = function (ce) {
+                    $(ce.target).closest('form').submit();
+                };
+            }
+            FindProvidersWidgetItem.prototype.initialise = function () {
+                var _this = this;
+                _super.prototype.initialise.call(this);
+                var loadingPanelElement = this.element.find("#ProvidersNearMeLoadingPanel");
+                var loadingPanel = loadingPanelElement.getAjaxLoadingPanel();
+                loadingPanel.element.on('click', 'a[data-post-form="true"]', function (ce) {
+                    _this.findProvidersNearMe(ce);
+                });
+            };
+            return FindProvidersWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.FindProvidersWidgetItem = FindProvidersWidgetItem;
+        var FindProvidersWidgetItemInitialiser = (function () {
+            function FindProvidersWidgetItemInitialiser() {
+            }
+            FindProvidersWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new FindProvidersWidgetItem(widgetItemElement);
+            };
+            return FindProvidersWidgetItemInitialiser;
+        }());
+        Widgets.FindProvidersWidgetItemInitialiser = FindProvidersWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=FindProvidersWidget.js.map

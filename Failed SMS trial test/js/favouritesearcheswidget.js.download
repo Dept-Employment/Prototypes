@@ -1,0 +1,48 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Midas;
+(function (Midas) {
+    var Widgets;
+    (function (Widgets) {
+        var FavouriteSearchesWidgetItem = (function (_super) {
+            __extends(FavouriteSearchesWidgetItem, _super);
+            function FavouriteSearchesWidgetItem() {
+                _super.apply(this, arguments);
+            }
+            FavouriteSearchesWidgetItem.prototype.initialise = function () {
+                _super.prototype.initialise.call(this);
+                var favouriteSearchesLoadingElement = this.element.find('#FavouriteSearchesLoadingPanel');
+                var favouriteSearchesLoadingPanel = favouriteSearchesLoadingElement.getAjaxLoadingPanel();
+                favouriteSearchesLoadingPanel.element.on('click', 'a.remove-item', function (ce) {
+                    ce.preventDefault();
+                    var removeElement = $(ce.currentTarget);
+                    $.ajax({
+                        url: removeElement.attr("href"),
+                        success: function () {
+                            favouriteSearchesLoadingPanel.refresh();
+                        }
+                    });
+                });
+                favouriteSearchesLoadingPanel.bind(Midas.Core.AjaxLoadingPanel.loadedEventName, function () {
+                    // Confirmation dialog initialisation
+                    Midas.Core.currentPage.initialise(favouriteSearchesLoadingPanel.element);
+                });
+            };
+            return FavouriteSearchesWidgetItem;
+        }(Midas.Core.WidgetItem));
+        Widgets.FavouriteSearchesWidgetItem = FavouriteSearchesWidgetItem;
+        var FavouriteSearchesWidgetItemInitialiser = (function () {
+            function FavouriteSearchesWidgetItemInitialiser() {
+            }
+            FavouriteSearchesWidgetItemInitialiser.prototype.initialise = function (widgetItemElement) {
+                return new FavouriteSearchesWidgetItem(widgetItemElement);
+            };
+            return FavouriteSearchesWidgetItemInitialiser;
+        }());
+        Widgets.FavouriteSearchesWidgetItemInitialiser = FavouriteSearchesWidgetItemInitialiser;
+    })(Widgets = Midas.Widgets || (Midas.Widgets = {}));
+})(Midas || (Midas = {}));
+//# sourceMappingURL=FavouriteSearchesWidget.js.map

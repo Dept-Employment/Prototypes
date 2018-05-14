@@ -1,0 +1,77 @@
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/jqueryui/jqueryui.d.ts" />
+var Midas;
+(function (Midas) {
+    var Core;
+    (function (Core) {
+        var AjaxValidation = (function () {
+            function AjaxValidation() {
+            }
+            AjaxValidation.processAjaxResult = function (result, parentContainer) {
+                Midas.Core.currentPage.summary.clearSummaries();
+                var validator = null;
+                if ($(parentContainer).is('form')) {
+                    validator = $.data(parentContainer, 'validator');
+                }
+                if (result.Status == 4) {
+                    var errors = {};
+                    var summaryErrors = [];
+                    $.each(result.ValidationResults, function (index, item) {
+                        var error = item;
+                        // Always treat recaptcha errors as 'Summary' errors (not specific to a field)
+                        if (error.Location === 'Recaptcha') {
+                            error.Location = '';
+                        }
+                        if (error.Location != undefined && error.Location != '') {
+                            errors[error.Location] = error.Message;
+                            if (validator != null) {
+                                validator.invalid[error.Location] = true;
+                            }
+                        }
+                        else {
+                            summaryErrors.push({ message: error.Message });
+                        }
+                    });
+                    if (errors && validator != null) {
+                        validator.showErrors(errors);
+                    }
+                    AJSValidate.ShowErrors(parentContainer, summaryErrors);
+                    return false;
+                }
+                else {
+                    var messagesKey = null;
+                    var toggleSummary = null;
+                    if (result.Status == 1) {
+                        messagesKey = "Success";
+                        toggleSummary = Midas.Core.currentPage.summary.toggleSuccessSummary;
+                    }
+                    else if (result.Status == 2) {
+                        messagesKey = "Information";
+                        toggleSummary = Midas.Core.currentPage.summary.toggleInfoSummary;
+                    }
+                    else if (result.Status == 3) {
+                        messagesKey = "Warning";
+                        toggleSummary = Midas.Core.currentPage.summary.toggleWarningSummary;
+                    }
+                    if (toggleSummary != null && result.NotificationMessages != null) {
+                        var messages = result.NotificationMessages[messagesKey];
+                        if (messages != null) {
+                            for (var i = 0; i < messages.length; i++) {
+                                toggleSummary(messages[i], false, false, $(parentContainer));
+                            }
+                        }
+                    }
+                    return true;
+                }
+            };
+            AjaxValidation.hideErrors = function (parentContainer) {
+                $(parentContainer).find('[data-valmsg-summary]').toggleClass('validation-summary-valid', true);
+            };
+            return AjaxValidation;
+        }());
+        Core.AjaxValidation = AjaxValidation;
+    })(Core = Midas.Core || (Midas.Core = {}));
+})(Midas || (Midas = {}));
+$(function () {
+});
+//# sourceMappingURL=midas.core.ajaxvalidation.js.map
