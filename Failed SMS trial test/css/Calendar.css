@@ -1,0 +1,312 @@
+#InnerContainerFor-Calendar #gotodate {
+	left: 240px; top: 30px; width: 0px; position: absolute; min-width: 0px; opacity: 0;
+}
+#calendar {
+	width: 100%;
+}
+#calendar .fc-gotoButton-button {
+	width: 40px;
+}
+#calendar .fc-hideFilter-button {
+	width: 40px;
+}
+#calendar .fc-showFilter-button {
+	width: 40px;
+}
+#calendar .fc-gotoButton-button::before {
+	font: 14px FontAwesome; content: "\f073"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .fc-hideFilter-button::before {
+	font: 14px FontAwesome; content: "\f010"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .fc-showFilter-button::before {
+	font: 14px FontAwesome; content: "\f00e"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .fc-list-item:hover td {
+	
+}
+.fc-list-item:hover td {
+	cursor: pointer; background-color: inherit;
+}
+.fc-time-grid-event:hover {
+	text-decoration: none !important; cursor: pointer;
+}
+.fc-day-grid-event:hover {
+	text-decoration: none !important; cursor: pointer;
+}
+#calendar .fc-list-table td {
+	color: rgb(0, 0, 0);
+}
+#calendar .appointment-event.fc-list-item .fc-widget-content {
+	color: rgb(255, 255, 255);
+}
+#calendar .holiday-event.fc-list-item .fc-widget-content {
+	color: rgb(255, 255, 255);
+}
+#calendar .fc-widget-header {
+	color: rgb(36, 42, 48) !important;
+}
+#calendar .fc-list-heading td {
+	padding: 5px !important;
+}
+#calendar .fc-event {
+	border: 1px solid rgb(0, 0, 0); border-image: none;
+}
+#calendar .diary-event.fc-time-grid-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-closed.fc-time-grid-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-open.fc-time-grid-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .provider-event.fc-time-grid-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .diary-event.fc-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-closed.fc-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-open.fc-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .provider-event.fc-event {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .diary-event.fc-event:hover {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-closed.fc-event:hover {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .timeslot-event-open.fc-event:hover {
+	color: rgb(0, 0, 0) !important;
+}
+#calendar .provider-event.fc-event {
+	color: rgb(0, 0, 0) !important;
+}
+.fc-highlight {
+	background: rgb(232, 95, 117); opacity: 0.5;
+}
+.fc-list-item .fc-event-dot {
+	display: none;
+}
+#calendar .popover-content {
+	border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(247, 247, 247);
+}
+#calendar .popover-title {
+	padding-right: 18px;
+}
+#calendar .new-event a {
+	color: rgb(66, 139, 202);
+}
+#calendar .new-event a:hover {
+	color: rgb(66, 139, 202);
+}
+.bg-blue.popover > .arrow::after {
+	border-top-color: rgb(52, 143, 226);
+}
+.bg-purple.popover > .arrow::after {
+	border-top-color: rgb(114, 124, 182);
+}
+.bg-red.popover > .arrow::after {
+	border-top-color: rgb(255, 91, 87);
+}
+.bg-black.popover > .arrow::after {
+	border-top-color: rgb(45, 53, 60);
+}
+.bg-orange.popover > .arrow::after {
+	border-top-color: rgb(255, 108, 44);
+}
+.bg-grey.popover > .arrow::after {
+	border-top-color: rgb(182, 194, 201);
+}
+.popover-title .close {
+	font-size: 20px; opacity: 1; text-shadow: none;
+}
+.top.popover .arrow {
+	top: 100% !important;
+}
+.bottom.popover .arrow {
+	top: -11px !important;
+}
+.fc-event .fc-bg {
+	opacity: 0;
+}
+.timeslot-event-open {
+	background: rgb(202, 230, 226) !important;
+}
+.timeslot-event-closed {
+	background: rgb(117, 171, 166) !important;
+}
+.appointment-event {
+	background: rgb(82, 131, 125) !important;
+}
+.provider-event {
+	background: rgb(125, 178, 199) !important;
+}
+.diary-event {
+	background: rgb(253, 224, 133) !important;
+}
+.holiday-event {
+	background: rgb(12, 125, 165) !important;
+}
+.new-event {
+	background: rgb(232, 95, 117) !important;
+}
+.timeslot-event-open.popover .popover-title {
+	background: rgb(202, 230, 226) !important; border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.timeslot-event-closed.popover .popover-title {
+	background: rgb(117, 171, 166) !important; border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.appointment-event.popover .popover-title {
+	background: rgb(82, 131, 125) !important; color: rgb(255, 255, 255); border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.new-event.popover .popover-title {
+	background: rgb(82, 131, 125) !important; color: rgb(255, 255, 255); border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.appointment-event.popover .popover-title .close {
+	color: rgb(255, 255, 255);
+}
+.new-event.popover .popover-title .close {
+	color: rgb(255, 255, 255);
+}
+.holiday-event.popover .popover-title .close {
+	color: rgb(255, 255, 255);
+}
+.provider-event.popover .popover-title {
+	background: rgb(125, 178, 199) !important; border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.diary-event.popover .popover-title {
+	background: rgb(253, 224, 133) !important; border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.holiday-event.popover .popover-title {
+	background: rgb(12, 125, 165) !important; color: rgb(255, 255, 255); border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.new-event.popover .popover-title {
+	background: rgb(232, 95, 117) !important; border-bottom-color: currentColor; border-bottom-width: medium; border-bottom-style: none;
+}
+.timeslot-event-open.popover > .arrow::after {
+	border-top-color: rgb(202, 230, 226); border-bottom-color: rgb(202, 230, 226);
+}
+.timeslot-event-closed.popover > .arrow::after {
+	border-top-color: rgb(117, 171, 166); border-bottom-color: rgb(117, 171, 166);
+}
+.appointment-event.popover > .arrow::after {
+	border-top-color: rgb(82, 131, 125); border-bottom-color: rgb(82, 131, 125);
+}
+.provider-event.popover > .arrow::after {
+	border-top-color: rgb(125, 178, 199); border-bottom-color: rgb(125, 178, 199);
+}
+.diary-event.popover > .arrow::after {
+	border-top-color: rgb(253, 224, 133); border-bottom-color: rgb(253, 224, 133);
+}
+.holiday-event.popover > .arrow::after {
+	border-top-color: rgb(12, 125, 165); border-bottom-color: rgb(12, 125, 165);
+}
+.new-event.popover > .arrow::after {
+	border-top-color: rgb(232, 95, 117); border-bottom-color: rgb(232, 95, 117);
+}
+.popover {
+	border: 1px solid rgb(0, 0, 0); border-image: none;
+}
+.bottom.popover {
+	
+}
+.verticla-box-column .bottom::after {
+	margin-bottom: 50px; content: ":";
+}
+.indented-link {
+	margin-left: 14px;
+}
+.bottom.popover::after {
+	padding-bottom: 30px; content: "";
+}
+#calendar .phone.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f095"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .phone.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f095"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .video.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f03d"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .video.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f03d"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .flag.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f024"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .flag.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f024"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .attended.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f00c"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .attended.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f00c"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .rescheduled.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f139"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .rescheduled.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f139"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-valid.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f058"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-valid.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f058"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-descretionary.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f057"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-descretionary.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f057"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f06a"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f06a"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-followup.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f137"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-followup.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f137"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-transfer.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f138"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dna-transfer.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f138"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dnai.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f00d"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .dnai.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f00d"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .transfer.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f054"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .transfer.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f054"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .cancelled.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f05e"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .cancelled.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f05e"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .create-error.fc-event .fc-content .fc-title::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f068"; font-size-adjust: none; font-stretch: normal;
+}
+#calendar .create-error.fc-list-item .fc-list-item-marker::before {
+	font: 14px FontAwesome; margin-right: 5px; margin-left: 3px; content: "\f068"; font-size-adjust: none; font-stretch: normal;
+}

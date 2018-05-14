@@ -1,0 +1,255 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.jobsearcheffortwidget dl dt,
+.jobsearcheffortwidget dl dd {
+  display: inline-block;
+  border-top: 1px solid #E2E2E2;
+  float: left;
+  padding: 5px 0;
+}
+.jobsearcheffortwidget dl dt {
+  width: 75%;
+}
+.jobsearcheffortwidget dl dd {
+  width: 25%;
+  text-align: right;
+}
+.jobsearcheffortwidget .graph-container,
+.jobsearcheffortwidget .text-container {
+  padding: 0;
+}
+.jobsearcheffortwidget .title-container a {
+  color: #fff;
+}
+.jobsearcheffortwidget .title-container h2 {
+  margin: 3px 0 10px;
+  font-size: 18px;
+}
+.jobsearcheffortwidget .text-container p.small {
+  margin: 4px 0 6px;
+}
+.jobsearcheffortwidget .graph-wrapper {
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+.jobsearcheffortwidget .graph {
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+  width: 200px;
+  height: 200px;
+}
+.jobsearcheffortwidget .graph .progress {
+  -moz-animation: jobsearcheffortprogress 2s ease-in forwards;
+  -o-animation: jobsearcheffortprogress 2s ease-in forwards;
+  -webkit-animation: jobsearcheffortprogress 2s ease-in forwards;
+  animation: jobsearcheffortprogress 2s ease-in forwards;
+  stroke-width: 14px;
+  stroke-linecap: round;
+}
+.jobsearcheffortwidget .graph .progress.success {
+  stroke: #9de219;
+}
+.jobsearcheffortwidget .graph .progress.danger {
+  stroke: #C6093B;
+}
+.jobsearcheffortwidget .graph .progress-background {
+  stroke-width: 14px;
+}
+.jobsearcheffortwidget .graph .progress-background.success {
+  stroke: rgba(157, 226, 25, 0.5);
+}
+.jobsearcheffortwidget .graph .progress-background.danger {
+  stroke: rgba(198, 9, 59, 0.5);
+}
+.jobsearcheffortwidget .graph-text-container {
+  position: absolute;
+  height: 110px;
+  width: 130px;
+  border-radius: 55px;
+  top: 45px;
+  left: 35px;
+  text-align: center;
+  display: table;
+}
+.jobsearcheffortwidget .graph-text-container .graph-text {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+.jobsearcheffortwidget .graph-text-container .graph-text p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4em;
+}
+.jobsearcheffortwidget .graph-text-container .graph-text .jobs {
+  margin: 0;
+  padding: 0;
+  font-size: 3em;
+  font-weight: 500;
+  line-height: .8em;
+}
+.jobsearcheffortwidget .graph-text-container .graph-text .jobs-suffix {
+  margin: 0;
+  font-size: .9em;
+  font-weight: 300;
+}
+.jobsearcheffortwidget .graph-text-container .graph-text .days-remaining {
+  margin-top: 4px;
+  padding: 0;
+  font-weight: 500;
+}
+.jobsearcheffortwidget .btn.btn-secondary.cta {
+  color: #fff;
+  background-color: #00a1d0;
+  border: 1px solid;
+  border-color: #00a1d0;
+  margin-top: 20px;
+}
+/*.jobsearch-reengagement-requirementsummary {
+
+
+    dl {
+        display: inline-block;
+        float: left;
+        padding: 5px 0;
+
+        dt {
+            width: 80%;
+            //border-top: 1px solid #E2E2E2;
+        }
+
+        dd {
+            width: 15%;
+            float: left;
+            text-align: right;
+        }
+    }
+
+
+    dl {
+        width: 100%;
+        overflow: hidden;
+        //background:;
+        padding: 0;
+        margin: 0;
+    }
+
+    dt {
+        float: left;
+        width: 50%;
+        // background: #cc0;
+        padding: 0;
+        margin: 0;
+    }
+
+    dd {
+        float: left;
+        width: 50%;
+        //background: 
+        padding: 0;
+        margin: 0;
+    }
+
+
+    .title-container {
+        a {
+            color: #fff;
+        }
+
+        h2 {
+            margin: 3px 0 10px;
+            font-size: 18px;
+        }
+    }
+
+
+
+    .btn.btn-secondary.cta {
+        color: #fff;
+        background-color: #00a1d0;
+        border: 1px solid;
+        border-color: #00a1d0;
+        margin-top: 20px;
+    }
+}*/
+.jobsearch-reengagement-requirementsummary {
+  padding-right: 20px;
+}
+.jobsearch-reengagement-requirementsummary dl dt,
+.jobsearch-reengagement-requirementsummary dl dd {
+  display: inline-block;
+  border-top: 1px solid #E2E2E2;
+  float: left;
+  padding: 5px 0;
+}
+.jobsearch-reengagement-requirementsummary .bt {
+  border-top: 1px solid #E2E2E2;
+}
+.jobsearch-reengagement-requirementsummary dl dt {
+  width: 80%;
+}
+.jobsearch-reengagement-requirementsummary dl dd {
+  width: 20%;
+  text-align: right;
+  padding-right: 5%;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-container,
+.jobsearch-reengagement-requirementsummary .text-container {
+  padding: 0;
+}
+.jobsearch-reengagement-requirementsummary .title-container {
+  width: 100%;
+  text-align: center;
+}
+.jobsearch-reengagement-requirementsummary .title-container a {
+  color: #fff;
+}
+.jobsearch-reengagement-requirementsummary .title-container h2 {
+  margin: 3px 0 30px 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+.jobsearch-reengagement-requirementsummary .text-container p.small {
+  margin: 4px 0 6px;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-wrapper {
+  position: relative;
+  min-height: 100px;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-text-container {
+  position: absolute;
+  height: 100px;
+  width: 260px;
+  border-radius: 55px;
+  text-align: center;
+  display: table;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-text-container .reengagement-count-text {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-text-container .reengagement-count-text p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4em;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-text-container .reengagement-count-text .jobs {
+  margin: 0;
+  padding: 0;
+  font-size: 3em;
+  font-weight: 500;
+  line-height: .8em;
+}
+.jobsearch-reengagement-requirementsummary .reengagement-count-text-container .reengagement-count-text .jobs-suffix {
+  margin: 0;
+  font-size: .9em;
+  font-weight: 300;
+}

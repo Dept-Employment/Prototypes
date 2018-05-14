@@ -1,0 +1,44 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+.careerprofile .btn.m-btn {
+  width: auto;
+}
+.heading.heading-img {
+  background: url('../img/career-profile-gradient.jpg') #eeeeee;
+  background-size: cover;
+  background-position: 100% 98%;
+  color: #ffffff;
+  padding: 20px 0;
+  margin: 0 0 20px;
+}
+.heading.heading-img .alert a {
+  color: #00a1d0;
+  text-decoration: underline;
+}
+.heading.heading-img .alert a:hover,
+.heading.heading-img .alert a:focus,
+.heading.heading-img .alert a:active {
+  text-decoration: none;
+}
+.heading.heading-img {
+  background-position: 100% 75%;
+}
+.profilepicture {
+  width: 100%;
+}
+/* Temp styles - Remove once full set of styles are in JobSearch */
+.navbar-secure {
+  display: block;
+}
+.validation-msg-adjustment {
+  height: 20px;
+}
+/* Retina-ize images/icons */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  /* logo */
+  /*    .navbar-brand { background-image: url(../img/logo@2x.png) !important; background-repeat: no-repeat !important; background-size: 97px 29px !important; }*/
+}
+/*# sourceMappingURL=Common.css.map */

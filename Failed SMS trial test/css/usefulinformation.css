@@ -1,0 +1,20 @@
+﻿/* Jobactive colors */
+/* Built in bootstrap colors */
+/*@btn-default-color:              @brand-primary;
+@btn-default-bg:                 @job-white;
+@btn-default-border:             @job-white;*/
+@media (min-width: 1200px) {
+  .useful-icon {
+    font-size: 40px;
+  }
+}
+@media (max-width: 1200px) {
+  .useful-icon {
+    font-size: 2em;
+  }
+}
+@media (min-width: 992px) and (max-width: 1199px) and (min-width: 768px) and (min-width: 991px) and (max-width: 768px) {
+  .useful-icon {
+    display: none;
+  }
+}
